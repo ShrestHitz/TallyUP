@@ -15,9 +15,16 @@ export interface SectorConfig {
   zones: string[];
   hazardCategories: string[];
   themeColor: string;
+  siteGeoLocation: {
+    latitude: number;
+    longitude: number;
+    radiusMeters: number;
+  };
 }
 
-export type UserRole = 'WORKER' | 'ADMIN';
+export type UserRole = 'WORKER' | 'SUPERVISOR' | 'ADMIN';
+export type OnboardingStage = 'SPLASH' | 'LANGUAGE' | 'ROLE' | 'APP';
+export type Language = 'en' | 'hi' | 'ta' | 'bn' | 'te' | 'kn' | 'ml';
 
 export interface WorkerProfile {
   id: string;
@@ -25,13 +32,32 @@ export interface WorkerProfile {
   phone: string;
   role: UserRole;
   sectorId: SectorType;
-  tradeRole: string; // e.g. "Lead Mason", "Scaffolding Rigger", "Sanitation Specialist"
+  tradeRole: string; // e.g. "Lead Scaffolding Mason"
   dailyBaseWage: number;
   hourlyRate: number;
-  preferredLanguage: 'en' | 'hi' | 'ta';
+  preferredLanguage: Language;
   avatar: string;
   yearsExperience: number;
   certifications: string[];
+  // Boss / Supervisor Rating
+  rating: number; // e.g. 4.9
+  ratingCount: number;
+  supervisorEndorsements: string[];
+  // Wallet & Rewards
+  rewardBalance: number; // ₹ earned from verified hazards
+  walletBalance: number; // ₹ total available for withdrawal
+  withdrawnTotal: number; // ₹ total already withdrawn
+}
+
+export interface GeotagProof {
+  latitude: number;
+  longitude: number;
+  accuracyMeters: number;
+  siteDistanceMeters: number;
+  geofenceStatus: 'INSIDE_SITE' | 'OUTSIDE_PERIMETER';
+  photoUrl: string; // Geotagged camera selfie / site photo
+  capturedAt: string;
+  photoHash: string; // Forensic hash
 }
 
 export interface AttendanceBlock {
@@ -50,9 +76,21 @@ export interface AttendanceBlock {
   hash: string; // SHA-256 of this block
   tamperFlag: boolean; // Flagged if hash does not match recalculation
   verifiedReceiptCode: string;
+  geotagProof?: GeotagProof;
+  adminCountersigned?: boolean; // Cross-checked by supervisor
+  countersignedBy?: string;
 }
 
 export type HazardSeverity = 'P1_CRITICAL' | 'P2_MODERATE' | 'P3_LOW';
+
+export type IncidentClassification =
+  | 'NEAR_MISS' // No injury, high potential
+  | 'FAC' // First Aid Case (minor, dressing)
+  | 'MTC' // Medical Treatment Case (stitches, no lost days)
+  | 'RWC' // Restricted Work Case (light duty only)
+  | 'LTI' // Lost Time Injury (lost workdays)
+  | 'FATALITY'; // Death / Life-critical
+
 export type HazardStatus = 'SUBMITTED' | 'ACKNOWLEDGED' | 'IN_PROGRESS' | 'RESOLVED';
 
 export interface HazardReport {
@@ -66,12 +104,16 @@ export interface HazardReport {
   translatedEnglishSummary: string;
   imageUrl?: string;
   category: string;
+  classification: IncidentClassification;
+  hazardIcon?: string;
   severity: HazardSeverity;
   recommendedAction: string;
   clusterCount: number;
   status: HazardStatus;
   slaMinutesRemaining: number;
   slaBreached: boolean;
+  rewardEarned: number; // ₹ earned when verified true
+  rewardCredited: boolean;
 }
 
 export interface AnonymousFeedback {
@@ -101,6 +143,10 @@ export interface WageAuditReport {
     en: string;
     hi: string;
     ta: string;
+    bn: string;
+    te: string;
+    kn: string;
+    ml: string;
   };
 }
 
@@ -116,4 +162,27 @@ export interface FatigueAlert {
   quitRiskScore: number; // 0-100 heuristic
   quitRiskFactors: string[];
   suggestedAction: string;
+}
+
+export interface InsurancePolicy {
+  id: string;
+  name: string;
+  type: 'GOVT_STATUTORY' | 'ACCIDENTAL' | 'HEALTH' | 'BOCW_WELFARE';
+  coverageAmount: string;
+  policyNumber: string;
+  provider: string;
+  status: 'ACTIVE' | 'CLAIM_READY';
+  claimHelpline: string;
+  renewalDate: string;
+  details: string;
+}
+
+export interface PayoutTransaction {
+  id: string;
+  date: string;
+  amount: number;
+  type: 'WAGE_CREDIT' | 'OVERTIME_BONUS' | 'HAZARD_REWARD' | 'UPI_WITHDRAWAL';
+  status: 'COMPLETED' | 'PROCESSING';
+  referenceUtr: string;
+  note: string;
 }

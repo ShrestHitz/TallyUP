@@ -486,6 +486,26 @@ npm run dev
 
 ---
 
+## 🚀 Vercel 1-Click Deployment from GitHub
+
+Deploying TallyUP to Vercel takes under 60 seconds directly from your GitHub repository:
+
+1. **Connect GitHub**: Ensure your code is pushed to [https://github.com/ShrestHitz/TallyUP.git](https://github.com/ShrestHitz/TallyUP.git).
+2. **Import to Vercel**:
+   - Log into [Vercel Dashboard](https://vercel.com/) and click **Add New > Project**.
+   - Select and import `TallyUP`.
+3. **Project Settings**:
+   - **Framework Preset**: `Next.js` (automatically configured)
+   - **Root Directory**: `./`
+   - **Build Command**: `npm run build`
+   - **Install Command**: `npm install`
+4. **Environment Variables**:
+   - `GEMINI_API_KEY`: *(Optional)* Add your Gemini API key from [Google AI Studio](https://aistudio.google.com/). If omitted, TallyUP automatically runs in resilient heuristic safety mode guaranteeing 100% demo uptime!
+5. **Deploy**:
+   - Hit **Deploy** and your production progressive web app is live with SSL, global CDN, and edge routing.
+
+---
+
 ## 🐳 Google Cloud Run Deployment
 
 ```bash

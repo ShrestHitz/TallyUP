@@ -3,7 +3,7 @@
 import React from 'react';
 import { useApp } from '@/context/AppContext';
 import { ShieldCheck, UserCheck, HardHat, GraduationCap, LayoutDashboard, Globe2, Sparkles } from 'lucide-react';
-import { Language } from '@/lib/i18n';
+import { Language } from '@/types';
 
 export const Navigation: React.FC = () => {
   const {
@@ -14,6 +14,7 @@ export const Navigation: React.FC = () => {
     viewMode,
     setViewMode,
     isLedgerTampered,
+    setOnboardingStage,
   } = useApp();
 
   return (
@@ -39,7 +40,11 @@ export const Navigation: React.FC = () => {
       }}>
         {/* Brand & Punchline */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <div
+            onClick={() => setOnboardingStage('SPLASH')}
+            title="Click to replay 3-Screen Onboarding"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer' }}
+          >
             <div style={{
               width: '38px',
               height: '38px',
@@ -239,6 +244,28 @@ export const Navigation: React.FC = () => {
               <span>Command Hub</span>
             </button>
           </div>
+
+          <button
+            onClick={() => setOnboardingStage('SPLASH')}
+            title="Launch 3-Screen Onboarding Flow"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              backgroundColor: 'rgba(163, 230, 53, 0.12)',
+              border: '1px solid #a3e635',
+              color: '#a3e635',
+              padding: '0.35rem 0.75rem',
+              borderRadius: '9999px',
+              fontSize: '0.75rem',
+              fontWeight: 800,
+              fontFamily: 'var(--font-mono)',
+              cursor: 'pointer',
+            }}
+          >
+            <Sparkles size={13} />
+            <span>Tour</span>
+          </button>
         </div>
       </div>
     </header>

@@ -1,8 +1,6 @@
-/**
- * Browser Web Speech API Utility for Voice-First Accessibility
- */
+import { Language } from '@/types';
 
-export function speakText(text: string, language: 'en' | 'hi' | 'ta' = 'en'): Promise<void> {
+export function speakText(text: string, language: Language = 'en'): Promise<void> {
   return new Promise((resolve, reject) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
       console.warn('Speech synthesis not supported in this browser.');
@@ -16,10 +14,14 @@ export function speakText(text: string, language: 'en' | 'hi' | 'ta' = 'en'): Pr
     utterance.rate = 0.95; // Slightly slower for clear comprehension
     utterance.pitch = 1.0;
 
-    const langCodes: Record<string, string> = {
+    const langCodes: Record<Language, string> = {
       en: 'en-IN',
       hi: 'hi-IN',
       ta: 'ta-IN',
+      ml: 'ml-IN',
+      bn: 'bn-IN',
+      te: 'te-IN',
+      kn: 'kn-IN',
     };
 
     utterance.lang = langCodes[language] || 'en-IN';

@@ -5,10 +5,15 @@ import { useApp } from '@/context/AppContext';
 import { Navigation } from '@/components/Navigation';
 import { WorkerHome } from '@/components/worker/WorkerHome';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
+import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { Github, ExternalLink, Zap } from 'lucide-react';
 
 export default function Home() {
-  const { viewMode, setViewMode } = useApp();
+  const { viewMode, setViewMode, onboardingStage, setOnboardingStage } = useApp();
+
+  if (onboardingStage !== 'APP') {
+    return <OnboardingFlow />;
+  }
 
   return (
     <div className="impeccable-shell" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#08090a' }}>
@@ -52,6 +57,23 @@ export default function Home() {
               <span>GitHub Repo</span>
               <ExternalLink size={12} />
             </a>
+
+            <button
+              onClick={() => setOnboardingStage('SPLASH')}
+              style={{
+                backgroundColor: 'rgba(163, 230, 53, 0.1)',
+                color: '#a3e635',
+                padding: '0.35rem 0.85rem',
+                borderRadius: '8px',
+                fontSize: '0.75rem',
+                fontWeight: 800,
+                border: '1px solid #a3e635',
+                fontFamily: 'var(--font-display)',
+                cursor: 'pointer',
+              }}
+            >
+              ✨ Replay 3-Screen Onboarding
+            </button>
 
             <button
               onClick={() => setViewMode(viewMode === 'WORKER' ? 'ADMIN' : 'WORKER')}
