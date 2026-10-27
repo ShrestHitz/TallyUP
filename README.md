@@ -1,20 +1,21 @@
 # 🛡️ TallyUP — The Decent Work Platform & Tamper-Evident Pocket Witness
+> **Punchline:** Every hour counts. Count it. Prove it. Get paid.  
 > **Theme:** UN SDG 8 — Decent Work and Economic Growth  
+> **Aesthetic:** Carbon Black & Electric Lime (Metacarbon × Fensory × Mobile Gaming UX)  
 > **Repository:** [https://github.com/ShrestHitz/TallyUP.git](https://github.com/ShrestHitz/TallyUP.git)  
 > **Target Deployment:** Google Cloud Run (Containerized Docker PWA)  
 > **Target Audiences:** Dual Interface — Zero-Literacy Mobile Worker PWA + Employer Operations Command Center
 
 ---
 
-## 📌 Executive Summary & One-Line Pitch
+## 📌 Executive Summary & Core Punchlines
 
+> ### *"Every hour counts."*  
+> ### *"Count it. Prove it. Get paid."*  
+>
 > **"A tamper-evident workforce platform where every hour worked, every rupee earned, and every safety hazard reported becomes cryptographically provable in the worker's native language and voice — while employers gain early, actionable visibility into fatigue, attrition, and safety risks."**
 
-Large workforces in employee-intensive sectors (**Construction, University Campuses, Hospitals, Manufacturing Plants**) still operate on paper muster rolls, informal logbooks, and fragmented WhatsApp groups. This creates a destructive asymmetry:
-1. **Workers** face uncounted overtime, opaque wage deductions, hesitation to report life-threatening safety hazards, and de-anonymization fears.
-2. **Employers** operate blind to cumulative workforce fatigue, delayed safety escalations, and silent turnover until catastrophic accidents or work stoppages occur.
-
-**TallyUP** bridges this divide through **TallyUP Pocket Witness**: a mobile-first Progressive Web App (PWA) with **tamper-evident SHA-256 attendance chaining**, **deterministic wage underpayment detection**, **multimodal voice/vision hazard triage**, and **AI-scrubbed anonymous feedback**.
+Large workforces in employee-intensive sectors (**Construction, University Campuses, Hospitals, Manufacturing Plants**) still operate on paper muster rolls, informal logbooks, and fragmented WhatsApp groups. TallyUP bridges this divide through **TallyUP Pocket Witness**: a mobile-first Progressive Web App (PWA) with **tamper-evident SHA-256 attendance chaining**, **deterministic wage underpayment detection**, **multimodal voice/vision hazard triage**, and **AI-scrubbed anonymous feedback**.
 
 ---
 

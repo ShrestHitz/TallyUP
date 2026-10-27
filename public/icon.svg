@@ -1,16 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="kmTealGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#009999" />
-      <stop offset="100%" stop-color="#005d5d" />
-    </linearGradient>
-    <linearGradient id="kmCyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#00e5ff" />
-      <stop offset="100%" stop-color="#2dd4bf" />
+    <linearGradient id="limeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ccff00" />
+      <stop offset="100%" stop-color="#a3e635" />
     </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="128" fill="#0a1118" />
-  <path d="M256 64 L416 128 V272 C416 368 256 448 256 448 C256 448 96 368 96 272 V128 Z" fill="url(#kmTealGrad)" />
-  <path d="M200 256 L240 296 L320 200" fill="none" stroke="url(#kmCyanGrad)" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" />
-  <circle cx="256" cy="170" r="16" fill="#00e5ff" />
+  <rect width="512" height="512" rx="128" fill="#08090a" />
+  <rect x="24" y="24" width="464" height="464" rx="104" fill="none" stroke="#24292f" stroke-width="8" />
+  <path d="M256 72 L416 136 V272 C416 368 256 440 256 440 C256 440 96 368 96 272 V136 Z" fill="#14171a" stroke="#a3e635" stroke-width="12" />
+  <path d="M190 260 L240 310 L330 190" fill="none" stroke="url(#limeGrad)" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="256" cy="150" r="16" fill="#ccff00" />
 </svg>

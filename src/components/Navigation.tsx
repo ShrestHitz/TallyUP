@@ -2,17 +2,15 @@
 
 import React from 'react';
 import { useApp } from '@/context/AppContext';
-import { Building2, Globe2, ShieldCheck, UserCheck, HardHat, GraduationCap, LayoutDashboard } from 'lucide-react';
+import { ShieldCheck, UserCheck, HardHat, GraduationCap, LayoutDashboard, Globe2, Sparkles } from 'lucide-react';
 import { Language } from '@/lib/i18n';
 
 export const Navigation: React.FC = () => {
   const {
     sectorId,
     setSectorId,
-    sector,
     language,
     setLanguage,
-    t,
     viewMode,
     setViewMode,
     isLedgerTampered,
@@ -20,17 +18,18 @@ export const Navigation: React.FC = () => {
 
   return (
     <header style={{
-      backgroundColor: '#0a1118',
-      borderBottom: '2px solid #009999',
+      backgroundColor: 'rgba(8, 9, 10, 0.85)',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      borderBottom: '1px solid #24292f',
       color: '#ffffff',
       padding: '0.75rem 1.25rem',
       position: 'sticky',
       top: 0,
       zIndex: 100,
-      boxShadow: '0 4px 20px rgba(0, 153, 153, 0.15)',
     }}>
       <div style={{
-        maxWidth: '1280px',
+        maxWidth: '1360px',
         margin: '0 auto',
         display: 'flex',
         alignItems: 'center',
@@ -38,85 +37,94 @@ export const Navigation: React.FC = () => {
         flexWrap: 'wrap',
         gap: '0.75rem',
       }}>
-        {/* Brand & SDG 8 Badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        {/* Brand & Punchline */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
             <div style={{
-              width: '36px',
-              height: '36px',
+              width: '38px',
+              height: '38px',
               borderRadius: '10px',
-              background: 'linear-gradient(135deg, #009999 0%, #2dd4bf 100%)',
+              backgroundColor: '#a3e635',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#ffffff',
-              boxShadow: '0 2px 10px rgba(0, 153, 153, 0.4)',
+              color: '#08090a',
+              boxShadow: '0 0 18px rgba(163, 230, 53, 0.45)',
+              fontWeight: 900,
+              fontFamily: 'var(--font-mono)',
+              fontSize: '1.15rem',
             }}>
-              <ShieldCheck size={22} />
+              :T.
             </div>
             <div>
               <div style={{
-                fontFamily: 'var(--font-heading)',
-                fontSize: '1.25rem',
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
+                fontFamily: 'var(--font-display)',
+                fontSize: '1.3rem',
+                fontWeight: 900,
+                letterSpacing: '-0.03em',
                 lineHeight: 1.1,
+                color: '#ffffff',
               }}>
-                Tally<span style={{ color: '#2dd4bf' }}>UP</span>
+                Tally<span style={{ color: '#a3e635' }}>UP</span>
               </div>
               <div style={{
                 fontSize: '0.65rem',
-                color: '#94a3b8',
+                color: '#a3e635',
+                fontFamily: 'var(--font-mono)',
                 letterSpacing: '0.08em',
+                fontWeight: 700,
                 textTransform: 'uppercase',
-                fontWeight: 600,
               }}>
-                Pocket Witness • SDG 8
+                Count it. Prove it. Get paid.
               </div>
             </div>
           </div>
 
           {/* Tamper status indicator pill */}
-          {isLedgerTampered ? (
+          {isLedgerTampered && (
             <span style={{
-              backgroundColor: 'rgba(239, 68, 68, 0.2)',
-              border: '1px solid #ef4444',
-              color: '#ef4444',
+              backgroundColor: 'rgba(255, 71, 87, 0.15)',
+              border: '1px solid #ff4757',
+              color: '#ff4757',
               fontSize: '0.7rem',
-              fontWeight: 700,
-              padding: '0.2rem 0.6rem',
+              fontWeight: 800,
+              fontFamily: 'var(--font-mono)',
+              padding: '0.2rem 0.65rem',
               borderRadius: '9999px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.3rem',
             }}>
-              ⚠️ Ledger Tamper Detected
-            </span>
-          ) : (
-            <span style={{
-              backgroundColor: 'rgba(0, 153, 153, 0.15)',
-              border: '1px solid #009999',
-              color: '#2dd4bf',
-              fontSize: '0.7rem',
-              fontWeight: 600,
-              padding: '0.2rem 0.6rem',
-              borderRadius: '9999px',
-              display: 'none',
-            }}>
-              ✓ Ledger Verified
+              ⚠️ LEDGER TAMPER DETECTED
             </span>
           )}
         </div>
 
+        {/* Center Punchline Banner (Desktop) */}
+        <div style={{
+          display: 'none',
+          alignItems: 'center',
+          gap: '0.5rem',
+          backgroundColor: '#14171a',
+          padding: '0.35rem 0.85rem',
+          borderRadius: '9999px',
+          border: '1px solid #24292f',
+          fontSize: '0.75rem',
+          fontFamily: 'var(--font-display)',
+          fontWeight: 700,
+          color: '#8b949e',
+        }} className="desktop-punch-pill">
+          <span style={{ color: '#a3e635', fontWeight: 800 }}>EVERY HOUR COUNTS.</span>
+          <span>•</span>
+          <span>PROVABLE ON-CHAIN WAGES</span>
+        </div>
+
         {/* Right side controls: Sector Selector, Language Picker, Role Switcher */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
           {/* Sector Switcher (Construction <-> Campus) */}
           <div style={{
             display: 'flex',
-            backgroundColor: '#1e293b',
+            backgroundColor: '#14171a',
             borderRadius: '9999px',
-            padding: '2px',
-            border: '1px solid #334155',
+            padding: '3px',
+            border: '1px solid #24292f',
           }}>
             <button
               onClick={() => setSectorId('construction')}
@@ -126,14 +134,14 @@ export const Navigation: React.FC = () => {
                 gap: '0.35rem',
                 padding: '0.35rem 0.75rem',
                 borderRadius: '9999px',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                backgroundColor: sectorId === 'construction' ? '#009999' : 'transparent',
-                color: sectorId === 'construction' ? '#ffffff' : '#94a3b8',
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                fontFamily: 'var(--font-display)',
+                backgroundColor: sectorId === 'construction' ? '#a3e635' : 'transparent',
+                color: sectorId === 'construction' ? '#08090a' : '#8b949e',
               }}
-              title="Switch to SkyRise Metro Construction Sector"
             >
-              <HardHat size={14} />
+              <HardHat size={13} />
               <span>Construction</span>
             </button>
             <button
@@ -144,14 +152,14 @@ export const Navigation: React.FC = () => {
                 gap: '0.35rem',
                 padding: '0.35rem 0.75rem',
                 borderRadius: '9999px',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                backgroundColor: sectorId === 'campus' ? '#0284c7' : 'transparent',
-                color: sectorId === 'campus' ? '#ffffff' : '#94a3b8',
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                fontFamily: 'var(--font-display)',
+                backgroundColor: sectorId === 'campus' ? '#00d2d3' : 'transparent',
+                color: sectorId === 'campus' ? '#08090a' : '#8b949e',
               }}
-              title="Switch to Apex Central University Campus Sector"
             >
-              <GraduationCap size={14} />
+              <GraduationCap size={13} />
               <span>Campus</span>
             </button>
           </div>
@@ -160,13 +168,13 @@ export const Navigation: React.FC = () => {
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            backgroundColor: '#1e293b',
+            backgroundColor: '#14171a',
             borderRadius: '9999px',
-            padding: '2px 0.5rem',
-            border: '1px solid #334155',
-            gap: '0.25rem',
+            padding: '3px 0.5rem',
+            border: '1px solid #24292f',
+            gap: '0.2rem',
           }}>
-            <Globe2 size={13} style={{ color: '#2dd4bf' }} />
+            <Globe2 size={13} style={{ color: '#a3e635' }} />
             {(['en', 'hi', 'ta'] as Language[]).map((lng) => (
               <button
                 key={lng}
@@ -175,9 +183,10 @@ export const Navigation: React.FC = () => {
                   padding: '0.2rem 0.5rem',
                   borderRadius: '9999px',
                   fontSize: '0.75rem',
-                  fontWeight: language === lng ? 700 : 500,
-                  backgroundColor: language === lng ? '#009999' : 'transparent',
-                  color: language === lng ? '#ffffff' : '#94a3b8',
+                  fontWeight: language === lng ? 800 : 500,
+                  fontFamily: 'var(--font-mono)',
+                  backgroundColor: language === lng ? '#a3e635' : 'transparent',
+                  color: language === lng ? '#08090a' : '#8b949e',
                 }}
               >
                 {lng === 'en' ? 'EN' : lng === 'hi' ? 'हिंदी' : 'தமிழ்'}
@@ -185,13 +194,13 @@ export const Navigation: React.FC = () => {
             ))}
           </div>
 
-          {/* View Mode Toggle: Worker PWA vs Admin Command Center */}
+          {/* View Mode Toggle: Worker PWA vs Admin Hub */}
           <div style={{
             display: 'flex',
-            backgroundColor: '#0f172a',
+            backgroundColor: '#14171a',
             borderRadius: '9999px',
-            padding: '2px',
-            border: '1px solid #334155',
+            padding: '3px',
+            border: '1px solid #24292f',
           }}>
             <button
               onClick={() => setViewMode('WORKER')}
@@ -199,16 +208,17 @@ export const Navigation: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.35rem',
-                padding: '0.4rem 0.85rem',
+                padding: '0.35rem 0.85rem',
                 borderRadius: '9999px',
-                fontSize: '0.8rem',
-                fontWeight: 700,
-                backgroundColor: viewMode === 'WORKER' ? '#009999' : 'transparent',
-                color: viewMode === 'WORKER' ? '#ffffff' : '#94a3b8',
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                fontFamily: 'var(--font-display)',
+                backgroundColor: viewMode === 'WORKER' ? '#a3e635' : 'transparent',
+                color: viewMode === 'WORKER' ? '#08090a' : '#8b949e',
               }}
             >
               <UserCheck size={14} />
-              <span>Worker PWA</span>
+              <span>Worker App</span>
             </button>
             <button
               onClick={() => setViewMode('ADMIN')}
@@ -216,16 +226,17 @@ export const Navigation: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.35rem',
-                padding: '0.4rem 0.85rem',
+                padding: '0.35rem 0.85rem',
                 borderRadius: '9999px',
-                fontSize: '0.8rem',
-                fontWeight: 700,
-                backgroundColor: viewMode === 'ADMIN' ? '#0f766e' : 'transparent',
-                color: viewMode === 'ADMIN' ? '#ffffff' : '#94a3b8',
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                fontFamily: 'var(--font-display)',
+                backgroundColor: viewMode === 'ADMIN' ? '#a3e635' : 'transparent',
+                color: viewMode === 'ADMIN' ? '#08090a' : '#8b949e',
               }}
             >
               <LayoutDashboard size={14} />
-              <span>Admin Hub</span>
+              <span>Command Hub</span>
             </button>
           </div>
         </div>

@@ -3,8 +3,8 @@ import '@/styles/globals.css';
 import { AppProvider } from '@/context/AppContext';
 
 export const metadata: Metadata = {
-  title: 'TallyUP — The Decent Work Platform & Tamper-Evident Pocket Witness',
-  description: 'UN SDG 8 Platform: Tamper-evident attendance, voice payslip audits, multimodal hazard triage, and safe anonymous worker voice.',
+  title: 'TallyUP — Every Hour Counts. Count It. Prove It. Get Paid.',
+  description: 'UN SDG 8 Decent Work Platform: Tamper-evident attendance ledger, Wage Guardian audio audit, multimodal hazard triage, and Safe Voice identity scrubber.',
   manifest: '/manifest.json',
   icons: {
     icon: '/icon.svg',
@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <meta name="theme-color" content="#009999" />
+        <meta name="theme-color" content="#08090a" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
       </head>
       <body>

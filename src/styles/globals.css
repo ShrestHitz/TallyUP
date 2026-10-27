@@ -1,7 +1,7 @@
 @import './design-tokens.css';
 
-/* Google Fonts Import for Outfit, Inter, and JetBrains Mono */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@500;600;700;800;900&display=swap');
+/* Google Fonts Import: Chivo, Archivo, Chivo Mono, Space Grotesk (Metacarbon & Fensory Stack) */
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Chivo+Mono:wght@400;500;600;700&family=Chivo:wght@400;600;700;800;900&family=Space+Grotesk:wght@500;600;700;800&display=swap');
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -12,18 +12,19 @@
 html, body {
   min-height: 100%;
   font-family: var(--font-body);
-  background-color: var(--km-canvas-bg);
-  color: var(--km-text-main);
+  background-color: var(--tly-carbon-base);
+  color: var(--tly-text-pure);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
+  overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading);
-  letter-spacing: -0.02em;
-  font-weight: 700;
-  color: inherit;
+  font-family: var(--font-display);
+  letter-spacing: -0.03em;
+  font-weight: 800;
+  color: var(--tly-text-heading);
 }
 
 button {
@@ -41,180 +42,196 @@ a {
 }
 
 /* =====================================================================
-   IMPECCABLE SURFACE & CARD PRIMITIVES
+   SOPHISTICATED CARBON & LIME UI PRIMITIVES
    ===================================================================== */
 
 .impeccable-shell {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: var(--tly-carbon-base);
+  background-image: radial-gradient(circle at 50% 0%, rgba(163, 230, 53, 0.08) 0%, transparent 60%);
 }
 
-/* Dark command center theme */
-.theme-dark {
-  background-color: var(--km-navy-deep);
-  color: var(--km-navy-light);
-}
-
-.theme-dark .panel-card {
-  background-color: var(--km-navy-card);
-  border: 1px solid var(--km-navy-border);
-  color: var(--km-navy-light);
-}
-
-.theme-dark .panel-card:hover {
-  border-color: var(--km-teal-primary);
-}
-
-/* Light / Worker theme */
-.theme-worker {
-  background: radial-gradient(135% 100% at 50% 0%, #e0f7f6 0%, #f8fafc 45%, #ffffff 100%);
-  color: var(--km-text-main);
-}
-
-/* Common Card */
-.tally-card {
-  background: #ffffff;
+/* Carbon Card */
+.carbon-card {
+  background: var(--tly-carbon-card);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--km-border-light);
-  box-shadow: var(--shadow-card);
+  border: 1px solid var(--tly-carbon-border);
+  box-shadow: var(--shadow-card-elevated);
   padding: 1.5rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.tally-card:hover {
-  box-shadow: var(--shadow-hover);
-}
-
-/* Large tactile action button for Workers */
-.tactile-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 1.5rem 1rem;
-  min-height: 120px;
-  border-radius: var(--radius-lg);
-  font-size: 1.15rem;
-  font-weight: 700;
-  text-align: center;
-  background: #ffffff;
-  border: 2px solid var(--km-teal-primary);
-  color: var(--km-navy-deep);
-  box-shadow: var(--shadow-card);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   position: relative;
   overflow: hidden;
 }
 
-.tactile-btn:active {
+.carbon-card:hover {
+  border-color: var(--tly-lime-border);
+  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.9), 0 0 20px rgba(163, 230, 53, 0.15);
+}
+
+/* Neon Lime Primary CTA Button (matches image) */
+.btn-lime-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding: 1rem 1.75rem;
+  border-radius: var(--radius-md);
+  background: var(--tly-lime-bright);
+  color: #08090a;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  box-shadow: 0 4px 20px rgba(204, 255, 0, 0.35);
+  border: none;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.btn-lime-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(204, 255, 0, 0.5);
+  filter: brightness(1.05);
+}
+
+.btn-lime-primary:active {
+  transform: scale(0.98);
+}
+
+/* Carbon Stealth Button */
+.btn-carbon-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.5rem;
+  border-radius: var(--radius-md);
+  background: var(--tly-carbon-elevated);
+  color: var(--tly-text-pure);
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  border: 1px solid var(--tly-carbon-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-carbon-secondary:hover {
+  border-color: var(--tly-lime-primary);
+  background: #20262b;
+}
+
+/* Tactile Mobile Card for Worker */
+.tactile-carbon-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1.25rem 1rem;
+  min-height: 120px;
+  border-radius: var(--radius-lg);
+  background: var(--tly-carbon-elevated);
+  border: 1px solid var(--tly-carbon-border);
+  color: var(--tly-text-pure);
+  box-shadow: var(--shadow-card-elevated);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+  cursor: pointer;
+}
+
+.tactile-carbon-tile:hover {
+  border-color: var(--tly-lime-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.8), 0 0 15px rgba(163, 230, 53, 0.2);
+}
+
+.tactile-carbon-tile:active {
   transform: scale(0.97);
 }
 
-.tactile-btn.primary {
-  background: linear-gradient(135deg, var(--km-teal-primary) 0%, var(--km-teal-dark) 100%);
-  color: #ffffff;
-  border-color: var(--km-teal-primary);
-  box-shadow: 0 10px 25px -5px rgba(0, 153, 153, 0.4);
-}
-
-.tactile-btn.hazard {
-  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-  color: #ffffff;
-  border-color: #ef4444;
-  box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.35);
-}
-
-.tactile-btn.amber {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: #ffffff;
-  border-color: #f59e0b;
-  box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.35);
-}
-
-.tactile-btn.navy {
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-  color: #ffffff;
-  border-color: #334155;
+.tactile-carbon-tile.active-lime {
+  background: linear-gradient(135deg, rgba(163, 230, 53, 0.15) 0%, var(--tly-carbon-elevated) 100%);
+  border-color: var(--tly-lime-primary);
+  box-shadow: 0 0 25px rgba(163, 230, 53, 0.25);
 }
 
 /* Badges */
-.badge {
+.badge-lime {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.35rem 0.75rem;
+  padding: 0.25rem 0.65rem;
   border-radius: var(--radius-pill);
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 800;
+  font-family: var(--font-display);
+  background: var(--tly-lime-subtle);
+  color: var(--tly-lime-primary);
+  border: 1px solid var(--tly-lime-border);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 }
 
-.badge-p1 {
-  background: var(--km-danger-bg);
-  color: var(--km-danger-red);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+.badge-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: var(--tly-danger-bg);
+  color: var(--tly-danger-coral);
+  border: 1px solid rgba(255, 71, 87, 0.3);
+  text-transform: uppercase;
 }
 
-.badge-p2 {
-  background: var(--km-hazard-amber-bg);
-  color: var(--km-hazard-amber);
-  border: 1px solid rgba(245, 158, 11, 0.3);
+/* Glowing Pulse Animation */
+@keyframes limePulseGlow {
+  0% { box-shadow: 0 0 0 0 rgba(163, 230, 53, 0.7); }
+  70% { box-shadow: 0 0 0 14px rgba(163, 230, 53, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(163, 230, 53, 0); }
 }
 
-.badge-p3 {
-  background: var(--km-success-bg);
-  color: var(--km-success-green);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+.pulse-lime {
+  animation: limePulseGlow 1.8s infinite;
 }
 
-.badge-verified {
-  background: rgba(0, 153, 153, 0.12);
-  color: var(--km-teal-primary);
-  border: 1px solid rgba(0, 153, 153, 0.3);
-  font-family: var(--font-mono);
+/* Audio Wave Animation */
+@keyframes audioPulse {
+  0%, 100% { height: 6px; }
+  50% { height: 26px; }
 }
 
-/* Pulse Animation for Critical Alerts */
-@keyframes pulseGlow {
-  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
-  70% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-}
-
-.pulse-critical {
-  animation: pulseGlow 1.8s infinite;
-}
-
-/* Voice Wave Animation */
-@keyframes waveMotion {
-  0%, 100% { height: 8px; }
-  50% { height: 28px; }
-}
-
-.voice-wave-bar {
+.audio-bar-lime {
   display: inline-block;
   width: 4px;
-  background: var(--km-cyan-bright);
+  background: var(--tly-lime-bright);
   border-radius: 4px;
-  animation: waveMotion 1s ease-in-out infinite;
+  animation: audioPulse 0.9s ease-in-out infinite;
 }
 
-.voice-wave-bar:nth-child(2) { animation-delay: 0.15s; }
-.voice-wave-bar:nth-child(3) { animation-delay: 0.3s; }
-.voice-wave-bar:nth-child(4) { animation-delay: 0.45s; }
-.voice-wave-bar:nth-child(5) { animation-delay: 0.6s; }
+.audio-bar-lime:nth-child(2) { animation-delay: 0.15s; }
+.audio-bar-lime:nth-child(3) { animation-delay: 0.3s; }
+.audio-bar-lime:nth-child(4) { animation-delay: 0.45s; }
+.audio-bar-lime:nth-child(5) { animation-delay: 0.6s; }
 
-/* Custom scrollbars */
+/* Custom Sleek Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(0,0,0,0.05);
+  background: #08090a;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--km-teal-primary);
+  background: #24292f;
   border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--tly-lime-primary);
 }
