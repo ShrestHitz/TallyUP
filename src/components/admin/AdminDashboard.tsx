@@ -71,6 +71,30 @@ export const AdminDashboard: React.FC = () => {
   const [endorsementText, setEndorsementText] = useState<string>('Master of Scaffolding & Zero Safety Violations');
   const [ratingSuccessMsg, setRatingSuccessMsg] = useState<string | null>(null);
 
+  // Supervisor Hazard Command State
+  const [hazardScope, setHazardScope] = useState<'ALL' | 'SECTOR' | 'PENDING'>('ALL');
+  const [hazardActionMsg, setHazardActionMsg] = useState<string | null>(null);
+
+  const handleSupervisorAction = (id: string, action: 'VERIFY' | 'CREW' | 'TAG' | 'RESOLVE' | 'DISMISS') => {
+    if (action === 'VERIFY') {
+      verifyAndRewardHazard(id);
+      setHazardActionMsg(`✅ Ticket #${id.toUpperCase()}: Verified genuine! ₹250 cash vigilance reward credited to worker.`);
+    } else if (action === 'CREW') {
+      updateHazardStatus(id, 'IN_PROGRESS', 'Emergency safety crew dispatched to location by field supervisor.');
+      setHazardActionMsg(`🚨 Ticket #${id.toUpperCase()}: Safety inspection crew dispatched! Zone status set to IN PROGRESS.`);
+    } else if (action === 'TAG') {
+      updateHazardStatus(id, 'ACKNOWLEDGED', 'Zone inspected, barricaded, and tagged with red alert.');
+      setHazardActionMsg(`🛑 Ticket #${id.toUpperCase()}: Hazard acknowledged. Location red-tagged & quarantined.`);
+    } else if (action === 'RESOLVE') {
+      updateHazardStatus(id, 'RESOLVED', 'Physical defect rectified and cleared by lead safety engineer.');
+      setHazardActionMsg(`✅ Ticket #${id.toUpperCase()}: Marked as rectified and closed.`);
+    } else if (action === 'DISMISS') {
+      updateHazardStatus(id, 'RESOLVED', 'Inspected and dismissed as non-critical duplicate.');
+      setHazardActionMsg(`Ticket #${id.toUpperCase()}: Dismissed as non-hazardous duplicate.`);
+    }
+    setTimeout(() => setHazardActionMsg(null), 4500);
+  };
+
   const handleVerifyChain = async () => {
     const result = await verifyLedgerChain(attendanceBlocks);
     if (result.valid) {
@@ -89,6 +113,12 @@ export const AdminDashboard: React.FC = () => {
   const sectorHazards = hazards.filter((h) => h.sectorId === sectorId);
   const criticalHazardsCount = sectorHazards.filter((h) => h.severity === 'P1_CRITICAL' && h.status !== 'RESOLVED').length;
 
+  const displayedHazards = hazards.filter((h) => {
+    if (hazardScope === 'SECTOR') return h.sectorId === sectorId;
+    if (hazardScope === 'PENDING') return h.status !== 'RESOLVED';
+    return true;
+  });
+
   return (
     <div style={{
       maxWidth: '1360px',
@@ -98,12 +128,12 @@ export const AdminDashboard: React.FC = () => {
     }}>
       {/* Top Punchline & Facility Command Banner */}
       <div style={{
-        backgroundColor: '#0e1113',
+        backgroundColor: '#0f172a',
         borderRadius: '24px',
         padding: '1.5rem 1.75rem',
-        color: '#ffffff',
-        border: '1px solid #24292f',
-        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)',
+        color: '#f8fafc',
+        border: '1px solid #1e293b',
+        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6)',
         marginBottom: '1.5rem',
         display: 'flex',
         alignItems: 'center',
@@ -117,9 +147,9 @@ export const AdminDashboard: React.FC = () => {
           position: 'absolute',
           top: '-50px',
           right: '20%',
-          width: '250px',
-          height: '150px',
-          background: 'radial-gradient(ellipse, rgba(163, 230, 53, 0.12), transparent 70%)',
+          width: '280px',
+          height: '160px',
+          background: 'radial-gradient(ellipse, rgba(16, 185, 129, 0.12), transparent 70%)',
           pointerEvents: 'none',
         }} />
 
@@ -128,7 +158,7 @@ export const AdminDashboard: React.FC = () => {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.45rem',
-            color: '#a3e635',
+            color: '#34d399',
             fontSize: '0.75rem',
             fontFamily: 'var(--font-mono)',
             fontWeight: 800,
@@ -137,13 +167,17 @@ export const AdminDashboard: React.FC = () => {
             marginBottom: '0.35rem',
           }}>
             <Zap size={13} />
-            <span>EVERY HOUR COUNTS • COUNT IT. PROVE IT. GET PAID.</span>
+            <span className="punchline-italic" style={{ fontSize: '0.95rem', fontStyle: 'italic', textTransform: 'none' }}>
+              "Every hour counts."
+            </span>
+            <span style={{ color: '#64748b' }}>•</span>
+            <span>COUNT IT. PROVE IT. GET PAID.</span>
           </div>
 
-          <h1 style={{ fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.03em', color: '#ffffff' }}>
+          <h1 style={{ fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.03em', color: '#f8fafc' }}>
             {sector.name}
           </h1>
-          <p style={{ fontSize: '0.85rem', color: '#8b949e', marginTop: '0.2rem' }}>
+          <p style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '0.2rem' }}>
             {sector.tagline} • Managing {sector.workerType}
           </p>
         </div>
@@ -155,13 +189,13 @@ export const AdminDashboard: React.FC = () => {
             style={{
               padding: '0.65rem 1.1rem',
               borderRadius: '12px',
-              backgroundColor: sectorId === 'construction' ? '#a3e635' : '#14171a',
-              color: sectorId === 'construction' ? '#08090a' : '#ffffff',
+              backgroundColor: sectorId === 'construction' ? '#10b981' : '#131c2a',
+              color: sectorId === 'construction' ? '#090d12' : '#f8fafc',
               fontWeight: 800,
               fontFamily: 'var(--font-display)',
               fontSize: '0.85rem',
-              border: '1px solid #24292f',
-              boxShadow: sectorId === 'construction' ? '0 0 15px rgba(163, 230, 53, 0.4)' : 'none',
+              border: '1px solid #1e293b',
+              boxShadow: sectorId === 'construction' ? '0 0 15px rgba(16, 185, 129, 0.35)' : 'none',
             }}
           >
             Metro Construction
@@ -171,13 +205,13 @@ export const AdminDashboard: React.FC = () => {
             style={{
               padding: '0.65rem 1.1rem',
               borderRadius: '12px',
-              backgroundColor: sectorId === 'campus' ? '#00d2d3' : '#14171a',
-              color: sectorId === 'campus' ? '#08090a' : '#ffffff',
+              backgroundColor: sectorId === 'campus' ? '#06b6d4' : '#131c2a',
+              color: sectorId === 'campus' ? '#090d12' : '#f8fafc',
               fontWeight: 800,
               fontFamily: 'var(--font-display)',
               fontSize: '0.85rem',
-              border: '1px solid #24292f',
-              boxShadow: sectorId === 'campus' ? '0 0 15px rgba(0, 210, 211, 0.4)' : 'none',
+              border: '1px solid #1e293b',
+              boxShadow: sectorId === 'campus' ? '0 0 15px rgba(6, 182, 212, 0.35)' : 'none',
             }}
           >
             Campus Operations
@@ -193,26 +227,26 @@ export const AdminDashboard: React.FC = () => {
         marginBottom: '1.5rem',
       }}>
         {/* Metric 1 */}
-        <div className="carbon-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'rgba(163, 230, 53, 0.15)', color: '#a3e635', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="carbon-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', backgroundColor: '#0f172a', border: '1px solid #1e293b' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#34d399', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Users size={24} />
           </div>
           <div>
-            <div style={{ fontSize: '0.72rem', color: '#8b949e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Active Headcount</div>
-            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#ffffff' }}>28 / 32</div>
-            <div style={{ fontSize: '0.7rem', color: '#a3e635', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>87.5% GEOTAGGED PRESENT</div>
+            <div style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Active Headcount</div>
+            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#f8fafc' }}>28 / 32</div>
+            <div style={{ fontSize: '0.7rem', color: '#34d399', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>87.5% GEOTAGGED PRESENT</div>
           </div>
         </div>
 
         {/* Metric 2 */}
-        <div className="carbon-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'rgba(255, 165, 2, 0.15)', color: '#ffa502', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="carbon-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', backgroundColor: '#0f172a', border: '1px solid #1e293b' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Clock size={24} />
           </div>
           <div>
-            <div style={{ fontSize: '0.72rem', color: '#8b949e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Cumulative Overtime</div>
-            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#ffffff' }}>142.5 hrs</div>
-            <div style={{ fontSize: '0.7rem', color: '#ffa502', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>2.0x MULTIPLIER AUDIT</div>
+            <div style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Cumulative Overtime</div>
+            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#f8fafc' }}>142.5 hrs</div>
+            <div style={{ fontSize: '0.7rem', color: '#f59e0b', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>2.0x MULTIPLIER AUDIT</div>
           </div>
         </div>
 
@@ -221,29 +255,31 @@ export const AdminDashboard: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           gap: '1rem',
-          borderColor: criticalHazardsCount > 0 ? '#ff4757' : '#24292f',
+          backgroundColor: '#0f172a',
+          border: '1px solid #1e293b',
+          borderColor: criticalHazardsCount > 0 ? '#ef4444' : '#1e293b',
         }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'rgba(255, 71, 87, 0.15)', color: '#ff4757', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <AlertTriangle size={24} />
           </div>
           <div>
-            <div style={{ fontSize: '0.72rem', color: '#8b949e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>P1 Hazards Pending</div>
-            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#ff4757' }}>{criticalHazardsCount} Active</div>
-            <div style={{ fontSize: '0.7rem', color: '#a3e635', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>+₹250 WORKER REWARD</div>
+            <div style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>P1 Hazards Pending</div>
+            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#ef4444' }}>{criticalHazardsCount} Active</div>
+            <div style={{ fontSize: '0.7rem', color: '#34d399', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>+₹250 WORKER REWARD</div>
           </div>
         </div>
 
         {/* Metric 4 */}
-        <div className="carbon-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: isLedgerTampered ? 'rgba(255, 71, 87, 0.15)' : 'rgba(163, 230, 53, 0.15)', color: isLedgerTampered ? '#ff4757' : '#a3e635', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="carbon-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', backgroundColor: '#0f172a', border: '1px solid #1e293b' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: isLedgerTampered ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)', color: isLedgerTampered ? '#ef4444' : '#34d399', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <ShieldCheck size={24} />
           </div>
           <div>
-            <div style={{ fontSize: '0.72rem', color: '#8b949e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>SHA-256 Ledger State</div>
-            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: isLedgerTampered ? '#ff4757' : '#a3e635' }}>
+            <div style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>SHA-256 Ledger State</div>
+            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: isLedgerTampered ? '#ef4444' : '#34d399' }}>
               {isLedgerTampered ? 'TAMPERED' : '100% INTACT'}
             </div>
-            <div style={{ fontSize: '0.7rem', color: '#8b949e', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>POCKET WITNESS CHAIN</div>
+            <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>POCKET WITNESS CHAIN</div>
           </div>
         </div>
       </div>
@@ -252,14 +288,14 @@ export const AdminDashboard: React.FC = () => {
       <div style={{
         display: 'flex',
         gap: '0.5rem',
-        borderBottom: '1px solid #24292f',
+        borderBottom: '1px solid #1e293b',
         marginBottom: '1.5rem',
         overflowX: 'auto',
       }}>
         {[
           { id: 'RADAR', label: 'Presence Cross-Check Radar', count: attendanceBlocks.length },
           { id: 'LEDGER', label: 'Tamper-Evident Ledger', badge: isLedgerTampered ? 'Tampered' : 'Verified' },
-          { id: 'HAZARDS', label: 'Hazards & Reward Approval', count: sectorHazards.length },
+          { id: 'HAZARDS', label: 'Hazards & Reward Approval', count: hazards.length },
           { id: 'SAFETY_REPORT', label: 'Monthly Safety Report', badge: 'ISO 45001' },
           { id: 'PAYROLL', label: 'Wage Guardian Audit', badge: '1 Dispute' },
           { id: 'RATINGS', label: 'Worker Ratings & Trust' },
@@ -274,8 +310,8 @@ export const AdminDashboard: React.FC = () => {
               fontSize: '0.85rem',
               fontWeight: 800,
               fontFamily: 'var(--font-display)',
-              color: activeAdminTab === tab.id ? '#a3e635' : '#8b949e',
-              borderBottom: activeAdminTab === tab.id ? '2px solid #a3e635' : '2px solid transparent',
+              color: activeAdminTab === tab.id ? '#34d399' : '#94a3b8',
+              borderBottom: activeAdminTab === tab.id ? '2px solid #10b981' : '2px solid transparent',
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
@@ -286,8 +322,8 @@ export const AdminDashboard: React.FC = () => {
             {tab.badge && (
               <span style={{
                 fontSize: '0.68rem',
-                backgroundColor: tab.badge === 'Tampered' ? 'rgba(255, 71, 87, 0.2)' : 'rgba(163, 230, 53, 0.2)',
-                color: tab.badge === 'Tampered' ? '#ff4757' : '#a3e635',
+                backgroundColor: tab.badge === 'Tampered' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                color: tab.badge === 'Tampered' ? '#ef4444' : '#34d399',
                 padding: '0.1rem 0.5rem',
                 borderRadius: '9999px',
                 fontWeight: 800,
@@ -299,8 +335,8 @@ export const AdminDashboard: React.FC = () => {
             {tab.count !== undefined && (
               <span style={{
                 fontSize: '0.68rem',
-                backgroundColor: '#1a1e22',
-                color: '#8b949e',
+                backgroundColor: '#1e293b',
+                color: '#94a3b8',
                 padding: '0.1rem 0.5rem',
                 borderRadius: '9999px',
                 fontWeight: 800,
@@ -608,94 +644,402 @@ export const AdminDashboard: React.FC = () => {
       )}
 
       {/* ===================================================================
-          TAB 3: HAZARDS & REWARD APPROVAL (+₹250 TO WORKER)
+          TAB 3: HAZARDS & REWARD APPROVAL (SUPERVISOR COMMAND HUB)
          =================================================================== */}
       {activeAdminTab === 'HAZARDS' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#ffffff' }}>
-              Hazard Triage & Safety Reward Approval ({sector.name})
-            </h3>
-            <span style={{ fontSize: '0.75rem', color: '#a3e635', fontFamily: 'var(--font-mono)' }}>
-              VERIFIED HAZARDS PAY ₹250 CASH REWARD TO REPORTING WORKER
-            </span>
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Header & Filter Controls */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1rem',
+            backgroundColor: '#0f172a',
+            border: '1px solid #1e293b',
+            borderRadius: '20px',
+            padding: '1.25rem 1.5rem',
+          }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                <span className="punchline-italic" style={{ color: '#34d399', fontSize: '1.15rem' }}>
+                  "Observe. Report. Prevent."
+                </span>
+                <span style={{ color: '#64748b' }}>•</span>
+                <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                  LIVE WORKER SAFETY INBOX
+                </span>
+              </div>
+              <h3 style={{ fontSize: '1.3rem', fontWeight: 900, color: '#f8fafc' }}>
+                Hazard Triage & Safety Reward Approval
+              </h3>
+              <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.15rem' }}>
+                Every verified frontline report transfers an instant ₹250 cash vigilance reward to the worker.
+              </p>
+            </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1rem' }}>
-            {sectorHazards.map((h) => (
-              <div
-                key={h.id}
-                className="carbon-card"
+            {/* Scope Filter Pill */}
+            <div style={{
+              display: 'flex',
+              backgroundColor: '#131c2a',
+              borderRadius: '9999px',
+              padding: '4px',
+              border: '1px solid #1e293b',
+              gap: '0.25rem',
+            }}>
+              <button
+                onClick={() => setHazardScope('ALL')}
                 style={{
-                  borderLeft: h.severity === 'P1_CRITICAL' ? '4px solid #ff4757' : '4px solid #ffa502',
+                  padding: '0.35rem 0.85rem',
+                  borderRadius: '9999px',
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  backgroundColor: hazardScope === 'ALL' ? '#10b981' : 'transparent',
+                  color: hazardScope === 'ALL' ? '#090d12' : '#94a3b8',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                  <span className={h.severity === 'P1_CRITICAL' ? 'badge-danger' : 'badge-lime'}>
-                    {h.severity === 'P1_CRITICAL' ? '⚠️ P1 Critical' : 'P2 Moderate'}
-                  </span>
-                  <span style={{ fontSize: '0.75rem', color: '#8b949e', fontFamily: 'var(--font-mono)' }}>{h.reportedAt}</span>
-                </div>
+                All Reports ({hazards.length})
+              </button>
+              <button
+                onClick={() => setHazardScope('SECTOR')}
+                style={{
+                  padding: '0.35rem 0.85rem',
+                  borderRadius: '9999px',
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  backgroundColor: hazardScope === 'SECTOR' ? '#10b981' : 'transparent',
+                  color: hazardScope === 'SECTOR' ? '#090d12' : '#94a3b8',
+                }}
+              >
+                {sector.name.split(' ')[0]} ({sectorHazards.length})
+              </button>
+              <button
+                onClick={() => setHazardScope('PENDING')}
+                style={{
+                  padding: '0.35rem 0.85rem',
+                  borderRadius: '9999px',
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  backgroundColor: hazardScope === 'PENDING' ? '#10b981' : 'transparent',
+                  color: hazardScope === 'PENDING' ? '#090d12' : '#94a3b8',
+                }}
+              >
+                Pending Action ({hazards.filter((h) => h.status !== 'RESOLVED').length})
+              </button>
+            </div>
+          </div>
 
-                <div style={{ fontWeight: 800, fontSize: '1rem', color: '#ffffff', marginBottom: '0.25rem' }}>
-                  {h.category}
-                </div>
+          {/* Supervisor Action Toast Message */}
+          {hazardActionMsg && (
+            <div style={{
+              backgroundColor: 'rgba(16, 185, 129, 0.12)',
+              border: '1px solid #10b981',
+              borderRadius: '14px',
+              padding: '0.85rem 1.25rem',
+              color: '#34d399',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+              fontFamily: 'var(--font-mono)',
+              animation: 'fadeIn 0.3s ease',
+            }}>
+              {hazardActionMsg}
+            </div>
+          )}
 
-                <div style={{ fontSize: '0.75rem', color: '#8b949e', marginBottom: '0.75rem' }}>
-                  📍 {h.zone} • {h.clusterCount > 1 ? `⚡ ${h.clusterCount} Workers Reported` : 'Single Report'}
-                </div>
+          {/* Grid of Hazard Tickets */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.25rem' }}>
+            {displayedHazards.map((h) => {
+              const reporter = workers.find((w) => w.id === h.reportedByWorkerId);
+              const isResolved = h.status === 'RESOLVED';
+              const isInProgress = h.status === 'IN_PROGRESS';
+              const isAcknowledged = h.status === 'ACKNOWLEDGED';
 
-                {/* Photo Evidence thumbnail */}
-                {h.imageUrl && (
-                  <div style={{ position: 'relative', width: '100%', height: '140px', borderRadius: '12px', overflow: 'hidden', marginBottom: '0.75rem', border: '1px solid #24292f' }}>
-                    <img src={h.imageUrl} alt="Hazard Evidence" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.7)', padding: '0.25rem 0.5rem', fontSize: '0.65rem', color: '#a3e635', fontFamily: 'var(--font-mono)' }}>
-                      📸 GEOTAGGED WORKER EVIDENCE
+              return (
+                <div
+                  key={h.id}
+                  style={{
+                    backgroundColor: '#0f172a',
+                    border: isResolved ? '1px solid #10b981' : h.severity === 'P1_CRITICAL' ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid #1e293b',
+                    borderLeft: h.severity === 'P1_CRITICAL' ? '4px solid #ef4444' : '4px solid #f59e0b',
+                    borderRadius: '20px',
+                    padding: '1.25rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)',
+                  }}
+                >
+                  <div>
+                    {/* Top Row: Severity, Classification, Time & ID */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.35rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span style={{
+                          backgroundColor: h.severity === 'P1_CRITICAL' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                          color: h.severity === 'P1_CRITICAL' ? '#ef4444' : '#f59e0b',
+                          padding: '0.2rem 0.55rem',
+                          borderRadius: '6px',
+                          fontSize: '0.7rem',
+                          fontWeight: 800,
+                          fontFamily: 'var(--font-mono)',
+                        }}>
+                          {h.severity === 'P1_CRITICAL' ? '⚠️ P1 CRITICAL' : 'P2 MODERATE'}
+                        </span>
+
+                        <span style={{
+                          backgroundColor: '#1e293b',
+                          color: '#cbd5e1',
+                          padding: '0.2rem 0.55rem',
+                          borderRadius: '6px',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          fontFamily: 'var(--font-mono)',
+                        }}>
+                          {h.classification || 'NEAR_MISS'}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '0.72rem', color: '#64748b', fontFamily: 'var(--font-mono)' }}>
+                          #{h.id.toUpperCase()}
+                        </span>
+                        <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                          {h.reportedAt}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                )}
 
-                <div style={{
-                  backgroundColor: '#08090a',
-                  border: '1px solid #1a1e22',
-                  borderRadius: '12px',
-                  padding: '0.75rem',
-                  fontSize: '0.82rem',
-                  color: '#f4fbe8',
-                  marginBottom: '0.75rem',
-                  lineHeight: 1.4,
-                }}>
-                  <div style={{ fontSize: '0.7rem', color: '#a3e635', fontWeight: 800, marginBottom: '0.2rem' }}>
-                    Gemini English Translation:
-                  </div>
-                  {h.translatedEnglishSummary}
-                </div>
+                    {/* Hazard Category Name */}
+                    <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#f8fafc', marginBottom: '0.35rem' }}>
+                      {h.category}
+                    </div>
 
-                <div style={{ fontSize: '0.75rem', color: '#ffb8b8', marginBottom: '1rem', fontWeight: 600 }}>
-                  Immediate Protocol: {h.recommendedAction}
-                </div>
+                    {/* Location & Reporter Info */}
+                    <div style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.85rem', flexWrap: 'wrap' }}>
+                      <span>📍 {h.zone.split('—')[0]}</span>
+                      <span>•</span>
+                      <span>👷 Reported by: <strong style={{ color: '#f8fafc' }}>{reporter?.name || 'Frontline Worker'}</strong></span>
+                      {h.clusterCount > 1 && (
+                        <span style={{ color: '#f59e0b', fontWeight: 700 }}>⚡ {h.clusterCount} Workers Reported</span>
+                      )}
+                    </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #1a1e22', paddingTop: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: h.status === 'RESOLVED' ? '#a3e635' : '#ffa502', fontFamily: 'var(--font-mono)' }}>
-                    STATUS: {h.status}
-                  </div>
+                    {/* Photo Evidence with Watermark (if present) */}
+                    {h.imageUrl && (
+                      <div style={{
+                        position: 'relative',
+                        width: '100%',
+                        height: '160px',
+                        borderRadius: '14px',
+                        overflow: 'hidden',
+                        marginBottom: '0.85rem',
+                        border: '1px solid #1e293b',
+                      }}>
+                        <img
+                          src={h.imageUrl}
+                          alt="Frontline Hazard Evidence"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                        <div style={{
+                          position: 'absolute',
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          backgroundColor: 'rgba(9, 13, 18, 0.85)',
+                          padding: '0.3rem 0.65rem',
+                          fontSize: '0.65rem',
+                          color: '#34d399',
+                          fontFamily: 'var(--font-mono)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                        }}>
+                          <Camera size={12} />
+                          <span>GEOTAGGED FRONTLINE EVIDENCE • PIER 14 WATERMARK</span>
+                        </div>
+                      </div>
+                    )}
 
-                  <div style={{ display: 'flex', gap: '0.4rem' }}>
-                    {h.status !== 'RESOLVED' && (
-                      <button
-                        onClick={() => verifyAndRewardHazard(h.id)}
-                        className="btn-lime-primary"
-                        style={{ padding: '0.4rem 0.85rem', fontSize: '0.75rem', borderRadius: '8px' }}
-                        title="Verifies report as genuine and transfers ₹250 directly to worker's wallet"
-                      >
-                        <Award size={14} />
-                        <span>Verify & Credit ₹250 Reward</span>
-                      </button>
+                    {/* Raw Worker Voice Transcript + Gemini Triage Summary */}
+                    <div style={{
+                      backgroundColor: '#131c2a',
+                      border: '1px solid #1e293b',
+                      borderRadius: '14px',
+                      padding: '0.85rem',
+                      fontSize: '0.82rem',
+                      color: '#f8fafc',
+                      marginBottom: '0.85rem',
+                      lineHeight: 1.45,
+                    }}>
+                      <div style={{ fontSize: '0.68rem', color: '#34d399', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.25rem', fontFamily: 'var(--font-mono)' }}>
+                        Worker Audio Note & AI Triage Summary:
+                      </div>
+                      <p style={{ fontStyle: 'italic', color: '#cbd5e1', marginBottom: '0.45rem' }}>
+                        "{h.voiceTranscriptRaw || h.translatedEnglishSummary}"
+                      </p>
+                      <div style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 600 }}>
+                        Immediate Protocol: {h.recommendedAction}
+                      </div>
+                    </div>
+
+                    {/* Supervisor Notes (if added) */}
+                    {h.supervisorNotes && (
+                      <div style={{
+                        backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                        borderRadius: '10px',
+                        padding: '0.55rem 0.75rem',
+                        fontSize: '0.75rem',
+                        color: '#34d399',
+                        marginBottom: '0.85rem',
+                      }}>
+                        <strong>Supervisor Log:</strong> {h.supervisorNotes}
+                      </div>
                     )}
                   </div>
+
+                  {/* Status Strip & Supervisor Action Buttons */}
+                  <div style={{ borderTop: '1px solid #1e293b', paddingTop: '0.85rem', marginTop: '0.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                      <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase' }}>
+                        Live Ticket Status:
+                      </span>
+                      <span style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        fontFamily: 'var(--font-mono)',
+                        color: isResolved ? '#10b981' : isInProgress ? '#06b6d4' : isAcknowledged ? '#f59e0b' : '#f97316',
+                      }}>
+                        {isResolved
+                          ? '● RESOLVED & ₹250 CREDITED'
+                          : isInProgress
+                          ? '● CREW DISPATCHED (IN PROGRESS)'
+                          : isAcknowledged
+                          ? '● ZONE RED-TAGGED'
+                          : '● PENDING SUPERVISOR TRIAGE'}
+                      </span>
+                    </div>
+
+                    {/* 5 Functional Action Buttons */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {/* Action 1: Verify & Award ₹250 */}
+                      {!isResolved && (
+                        <button
+                          onClick={() => handleSupervisorAction(h.id, 'VERIFY')}
+                          className="btn-lime-primary"
+                          style={{
+                            width: '100%',
+                            padding: '0.55rem',
+                            fontSize: '0.78rem',
+                            borderRadius: '10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.4rem',
+                          }}
+                          title="Validates report as genuine and transfers ₹250 direct cash to worker wallet"
+                        >
+                          <Award size={15} />
+                          <span>Verify Genuine & Credit ₹250 Cash Reward</span>
+                        </button>
+                      )}
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.45rem' }}>
+                        {/* Action 2: Dispatch Safety Crew */}
+                        {!isInProgress && !isResolved && (
+                          <button
+                            onClick={() => handleSupervisorAction(h.id, 'CREW')}
+                            style={{
+                              backgroundColor: '#1e293b',
+                              color: '#06b6d4',
+                              border: '1px solid #06b6d4',
+                              padding: '0.45rem 0.65rem',
+                              borderRadius: '8px',
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '0.35rem',
+                            }}
+                          >
+                            <Radio size={13} />
+                            <span>Dispatch Crew</span>
+                          </button>
+                        )}
+
+                        {/* Action 3: Red-Tag Zone */}
+                        {!isAcknowledged && !isResolved && (
+                          <button
+                            onClick={() => handleSupervisorAction(h.id, 'TAG')}
+                            style={{
+                              backgroundColor: '#1e293b',
+                              color: '#f59e0b',
+                              border: '1px solid #f59e0b',
+                              padding: '0.45rem 0.65rem',
+                              borderRadius: '8px',
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '0.35rem',
+                            }}
+                          >
+                            <Shield size={13} />
+                            <span>Red-Tag Zone</span>
+                          </button>
+                        )}
+
+                        {/* Action 4: Mark Rectified & Close */}
+                        {!isResolved && (
+                          <button
+                            onClick={() => handleSupervisorAction(h.id, 'RESOLVE')}
+                            style={{
+                              backgroundColor: '#1e293b',
+                              color: '#10b981',
+                              border: '1px solid #10b981',
+                              padding: '0.45rem 0.65rem',
+                              borderRadius: '8px',
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '0.35rem',
+                            }}
+                          >
+                            <CheckCircle2 size={13} />
+                            <span>Mark Rectified</span>
+                          </button>
+                        )}
+
+                        {/* Action 5: Dismiss as Duplicate */}
+                        {!isResolved && (
+                          <button
+                            onClick={() => handleSupervisorAction(h.id, 'DISMISS')}
+                            style={{
+                              backgroundColor: 'transparent',
+                              color: '#64748b',
+                              border: '1px solid #334155',
+                              padding: '0.45rem 0.65rem',
+                              borderRadius: '8px',
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Dismiss
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

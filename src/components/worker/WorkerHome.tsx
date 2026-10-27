@@ -36,8 +36,11 @@ import {
   Wind,
   Construction,
   AlertOctagon,
+  FileCheck,
+  Search,
+  ListChecks,
 } from 'lucide-react';
-import { speakText, stopSpeaking } from '@/lib/speech';
+import { speakText, stopSpeaking, playAuditoryChime, startSpeechToText } from '@/lib/speech';
 import { auditWorkerPay } from '@/lib/wage-engine';
 import { triageHazardReport, scrubFeedbackIdentity } from '@/lib/gemini';
 import {
@@ -57,6 +60,7 @@ export const WorkerHome: React.FC = () => {
     clockInWithGeotag,
     clockOut,
     attendanceBlocks,
+    hazards,
     addHazard,
     addFeedback,
     insurances,
@@ -64,7 +68,7 @@ export const WorkerHome: React.FC = () => {
     withdrawEarnings,
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'HOME' | 'PAY' | 'HAZARD' | 'INSURANCE' | 'WALLET' | 'PASSPORT' | 'FEEDBACK'>('HOME');
+  const [activeTab, setActiveTab] = useState<'HOME' | 'PAY' | 'HAZARD' | 'MY_REPORTS' | 'INSURANCE' | 'WALLET' | 'PASSPORT' | 'FEEDBACK'>('HOME');
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
 
   // Geotag Camera Check-In Modal
@@ -82,13 +86,24 @@ export const WorkerHome: React.FC = () => {
   const [hazardText, setHazardText] = useState<string>('');
   const [selectedZone, setSelectedZone] = useState<string>(sector.zones[0]);
   const [selectedClassification, setSelectedClassification] = useState<IncidentClassification>('NEAR_MISS');
-  const [selectedHazardCategory, setSelectedHazardCategory] = useState<string>('electrical_shock');
+  const [selectedHazardCategory, setSelectedHazardCategory] = useState<string>('scaffolding_height');
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [isAnalyzingAi, setIsAnalyzingAi] = useState<boolean>(false);
-  const [hazardSubmittedSuccess, setHazardSubmittedSuccess] = useState<boolean>(false);
   const [hazardImagePreview, setHazardImagePreview] = useState<string | null>(
     'https://images.unsplash.com/photo-1541888946425-d0fbb186f5f8?w=500&auto=format&fit=crop&q=60'
   );
+
+  // Submission Confirmation Modal & Ticket
+  const [submittedTicket, setSubmittedTicket] = useState<{
+    id: string;
+    category: string;
+    classification: IncidentClassification;
+    reportedAt: string;
+    zone: string;
+    status: string;
+    reward: number;
+    imageUrl?: string;
+  } | null>(null);
 
   // Withdrawal Modal
   const [showWithdrawModal, setShowWithdrawModal] = useState<boolean>(false);
@@ -104,6 +119,9 @@ export const WorkerHome: React.FC = () => {
 
   const workerBlocks = attendanceBlocks.filter((b) => b.workerId === currentWorker.id);
   const latestBlock = workerBlocks[workerBlocks.length - 1];
+
+  // Hazards reported by this current worker
+  const myReportedHazards = hazards.filter((h) => h.reportedByWorkerId === currentWorker.id);
 
   const wageAudit = auditWorkerPay(
     currentWorker,
@@ -154,12 +172,11 @@ export const WorkerHome: React.FC = () => {
           setGeoCoords({
             lat: Number(pos.coords.latitude.toFixed(4)),
             lng: Number(pos.coords.longitude.toFixed(4)),
-            accuracy: Math.round(pos.coords.accuracy),
+            accuracy: Number(pos.coords.accuracy.toFixed(1)),
           });
         },
         () => {
-          // Fallback to Kochi Metro pier 14 coordinates
-          setGeoCoords({ lat: 9.9816, lng: 76.2999, accuracy: 3.5 });
+          // default coordinates
         }
       );
     }
@@ -168,6 +185,7 @@ export const WorkerHome: React.FC = () => {
 
   const handleConfirmGeotagCheckIn = async () => {
     await clockInWithGeotag(sector.zones[0], capturedPhotoUrl, geoCoords.lat, geoCoords.lng);
+    playAuditoryChime('SUCCESS');
     setShowGeotagModal(false);
   };
 
@@ -181,6 +199,7 @@ export const WorkerHome: React.FC = () => {
 
     const success = withdrawEarnings(amt, withdrawUpi);
     if (success) {
+      playAuditoryChime('SUCCESS');
       setWithdrawSuccessMsg(`₹${amt} successfully transferred to ${withdrawUpi}! Ref UTR generated.`);
       setTimeout(() => {
         setWithdrawSuccessMsg(null);
@@ -189,21 +208,42 @@ export const WorkerHome: React.FC = () => {
     }
   };
 
+  // Speech-to-text recording with Web Audio feedback
   const handleVoiceRecordToggle = () => {
     if (!isRecording) {
       setIsRecording(true);
-      setTimeout(() => {
-        if (language === 'ta') {
-          setHazardText('இரண்டாவது தூண் சாரக்கட்டு மிகவும் ஆடுகிறது, கம்பிகள் தளர்ந்து உள்ளன (Pier scaffolding vibrating violently)');
-        } else if (language === 'hi') {
-          setHazardText('चार नंबर पिलर के पास बिजली का खुला तार पानी में डूबा है करंट लग सकता है (Exposed live cable submerged in water)');
-        } else {
-          setHazardText('Heavy scaffolding clamp on Pier 14 loose and rattling dangerously under concrete transit.');
+      playAuditoryChime('START');
+
+      const recognizer = startSpeechToText(
+        language,
+        (transcript) => {
+          setHazardText(transcript);
+        },
+        () => {
+          // Fallback realistic phrase in worker's tongue
+          setTimeout(() => {
+            if (language === 'hi') {
+              setHazardText('पिलर 14 के पास तार ढीला है और काम करते समय बहुत हिल रहा है, तत्काल जांच चाहिए।');
+            } else if (language === 'ta') {
+              setHazardText('இரண்டாவது தூண் சாரக்கட்டு மிகவும் ஆடுகிறது, கம்பிகள் தளர்ந்து உள்ளன.');
+            } else if (language === 'ml') {
+              setHazardText('പില്ലർ 14-ലെ സ്കാഫോൾഡിംഗ് ഇളകി നിൽക്കുന്നു, തൊഴിലാളികൾ താഴെ വീഴാൻ സാധ്യതയുണ്ട്.');
+            } else {
+              setHazardText('Loose scaffolding clamp at Pier 14 vibrating violently under transit weight.');
+            }
+          }, 1500);
         }
+      );
+
+      // Auto stop after 5 seconds
+      setTimeout(() => {
+        recognizer.stop();
         setIsRecording(false);
-      }, 2000);
+        playAuditoryChime('STOP');
+      }, 4500);
     } else {
       setIsRecording(false);
+      playAuditoryChime('STOP');
     }
   };
 
@@ -214,7 +254,10 @@ export const WorkerHome: React.FC = () => {
     const triage = await triageHazardReport(hazardText, selectedZone, sector.name, hazardImagePreview || undefined);
     const matchedCategory = SAFETY_HAZARD_CATEGORIES.find((c) => c.id === selectedHazardCategory);
 
+    const ticketId = `hz-${Date.now().toString().slice(-4)}`;
+
     addHazard({
+      id: ticketId,
       sectorId: sector.id,
       zone: selectedZone,
       reportedByWorkerId: currentWorker.id,
@@ -229,10 +272,22 @@ export const WorkerHome: React.FC = () => {
       recommendedAction: triage.recommendedAction,
     });
 
+    playAuditoryChime('SUCCESS');
     setIsAnalyzingAi(false);
-    setHazardSubmittedSuccess(true);
+
+    // Set confirmation ticket
+    setSubmittedTicket({
+      id: ticketId,
+      category: matchedCategory?.name || triage.category,
+      classification: selectedClassification,
+      reportedAt: 'Just now',
+      zone: selectedZone,
+      status: 'SUBMITTED',
+      reward: 250,
+      imageUrl: hazardImagePreview || undefined,
+    });
+
     setHazardText('');
-    setTimeout(() => setHazardSubmittedSuccess(false), 5000);
   };
 
   const handleFeedbackChange = async (text: string) => {
@@ -245,10 +300,10 @@ export const WorkerHome: React.FC = () => {
     }
   };
 
-  const handleSubmitFeedback = () => {
+  const handleSendFeedback = () => {
     if (!rawFeedback.trim()) return;
-    const finalScrubbed = scrubbedPreview || rawFeedback;
-    addFeedback(rawFeedback, finalScrubbed, feedbackCategory);
+    addFeedback(rawFeedback, scrubbedPreview || rawFeedback, feedbackCategory);
+    playAuditoryChime('SUCCESS');
     setFeedbackSuccess(true);
     setRawFeedback('');
     setScrubbedPreview('');
@@ -257,1245 +312,1322 @@ export const WorkerHome: React.FC = () => {
 
   return (
     <div style={{
-      maxWidth: '440px',
+      maxWidth: '1360px',
       margin: '0 auto',
-      minHeight: 'calc(100vh - 80px)',
-      backgroundColor: '#0e1113',
-      borderRadius: '32px',
-      border: '1px solid #24292f',
-      boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.95), 0 0 40px rgba(163, 230, 53, 0.08)',
+      width: '100%',
+      minHeight: 'calc(100vh - 75px)',
+      padding: '1.25rem 1rem 5rem',
       display: 'flex',
       flexDirection: 'column',
-      position: 'relative',
-      overflow: 'hidden',
+      gap: '1.5rem',
     }}>
-      {/* Top Mobile Status Header Bar */}
+      {/* =====================================================================
+          TOP EXECUTIVE HEADER & NAVIGATION BAR (RESPONSIVE LAPTOP & PHONE)
+         ===================================================================== */}
       <div style={{
-        padding: '1.25rem 1.25rem 0.75rem',
+        backgroundColor: '#0f172a',
+        border: '1px solid #1e293b',
+        borderRadius: '24px',
+        padding: '1.25rem 1.75rem',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        borderBottom: '1px solid #1a1e22',
+        flexWrap: 'wrap',
+        gap: '1rem',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+        {/* Worker Profile Badge */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '10px',
-            backgroundColor: '#a3e635',
-            color: '#08090a',
+            width: '54px',
+            height: '54px',
+            borderRadius: '16px',
+            backgroundColor: '#131c2a',
+            border: '2px solid #10b981',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontFamily: 'var(--font-mono)',
-            fontWeight: 900,
-            fontSize: '1rem',
+            fontSize: '1.75rem',
+            boxShadow: '0 0 20px rgba(16, 185, 129, 0.2)',
           }}>
-            :T.
+            {currentWorker.avatar}
           </div>
           <div>
-            <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#ffffff', letterSpacing: '-0.02em' }}>
-              {currentWorker.name}
-            </div>
-            <div style={{ fontSize: '0.72rem', color: '#a3e635', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <span>{currentWorker.tradeRole}</span>
-              <span>•</span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#ffa502' }}>
-                <Star size={11} fill="#ffa502" />
-                {currentWorker.rating} ({currentWorker.ratingCount})
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f8fafc' }}>
+                {currentWorker.name}
+              </h2>
+              <span className="badge-lime" style={{ fontSize: '0.65rem' }}>
+                ★ {currentWorker.rating} Verified
               </span>
+            </div>
+            <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '2px' }}>
+              {currentWorker.tradeRole} • {sector.name} ({sector.zones[0].split('—')[0]})
             </div>
           </div>
         </div>
 
-        {/* Wallet Quick Balance Badge */}
-        <button
-          onClick={() => setActiveTab('WALLET')}
-          style={{
-            backgroundColor: '#14171a',
-            border: '1px solid #24292f',
-            padding: '0.35rem 0.65rem',
-            borderRadius: '12px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-          }}
-        >
-          <Wallet size={14} style={{ color: '#a3e635' }} />
-          <span style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: '#ffffff', fontWeight: 900 }}>
-            ₹{currentWorker.walletBalance}
-          </span>
-        </button>
+        {/* Navigation Tabs Bar */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.35rem',
+          backgroundColor: '#131c2a',
+          padding: '4px',
+          borderRadius: '16px',
+          border: '1px solid #1e293b',
+          overflowX: 'auto',
+          maxWidth: '100%',
+        }}>
+          {[
+            { id: 'HOME', label: t.overviewTab || 'Overview', icon: <Activity size={16} /> },
+            { id: 'PAY', label: t.earningsTab || 'Earnings', icon: <TrendingUp size={16} /> },
+            { id: 'HAZARD', label: t.hazardTile || 'Report Hazard', icon: <ShieldAlert size={16} />, highlight: true },
+            { id: 'MY_REPORTS', label: t.myReportsTab || 'Track Tickets', icon: <ListChecks size={16} />, count: myReportedHazards.length },
+            { id: 'INSURANCE', label: t.policiesTab || 'Policies', icon: <Shield size={16} /> },
+            { id: 'WALLET', label: t.walletTab || 'Wallet', icon: <Wallet size={16} /> },
+            { id: 'PASSPORT', label: 'Passport', icon: <Award size={16} /> },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.55rem 0.95rem',
+                borderRadius: '12px',
+                fontSize: '0.82rem',
+                fontWeight: 700,
+                color: activeTab === tab.id ? '#ffffff' : '#94a3b8',
+                backgroundColor: activeTab === tab.id ? '#10b981' : tab.highlight ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+                border: tab.highlight && activeTab !== tab.id ? '1px solid rgba(16, 185, 129, 0.3)' : 'none',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {tab.icon}
+              <span>{tab.label}</span>
+              {tab.count !== undefined && tab.count > 0 && (
+                <span style={{
+                  backgroundColor: activeTab === tab.id ? '#090d12' : '#1e293b',
+                  color: activeTab === tab.id ? '#34d399' : '#ffffff',
+                  fontSize: '0.65rem',
+                  padding: '1px 6px',
+                  borderRadius: '9999px',
+                  fontWeight: 800,
+                }}>
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Hero Punchline Banner */}
-      <div style={{
-        padding: '1.25rem 1.25rem 0.65rem',
-        textAlign: 'center',
-        background: 'radial-gradient(ellipse at 50% -20%, rgba(163, 230, 53, 0.18), transparent 70%)',
-      }}>
-        <div style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: '1.55rem',
-          fontWeight: 900,
-          lineHeight: 1.1,
-          letterSpacing: '-0.03em',
-          color: '#ffffff',
-          textTransform: 'uppercase',
-        }}>
-          Every hour counts.
-        </div>
-        <div style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: '0.85rem',
-          fontWeight: 800,
-          color: '#a3e635',
-          marginTop: '0.35rem',
-          letterSpacing: '0.04em',
-          textTransform: 'uppercase',
-        }}>
-          Count it. Prove it. Get paid.
-        </div>
-      </div>
+      {/* =====================================================================
+          VIEW 1: HOME SCREEN (BLENDED STANDING WORKER WITH TALLYUP BOARD)
+         ===================================================================== */}
+      {activeTab === 'HOME' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Punchlines Header with Editorial Italic Typography */}
+          <div>
+            <h1 className="punchline-italic" style={{
+              fontSize: 'clamp(2.2rem, 5vw, 3.4rem)',
+              fontStyle: 'italic',
+              fontWeight: 500,
+              color: '#f8fafc',
+              lineHeight: 1.1,
+              letterSpacing: '-0.02em',
+              marginBottom: '0.35rem',
+            }}>
+              "{t.punchlineTitle || 'Every hour counts.'}"
+            </h1>
+            <p style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '1rem',
+              fontWeight: 800,
+              color: '#34d399',
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+            }}>
+              {t.punchlineSub || 'Count it. Prove it. Get paid.'}
+            </p>
+          </div>
 
-      {/* Main Content Body */}
-      <div style={{ padding: '0.75rem 1.25rem 5.5rem', flex: 1, overflowY: 'auto' }}>
-        {/* ===================================================================
-            VIEW 1: HOME (THE HIGH-ENERGY TILES)
-           =================================================================== */}
-        {activeTab === 'HOME' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            {/* Blended Industrial Safety Banner (Image 1 & 4 Reference) */}
+          {/* Main 2-Column Responsive Layout for Laptop & Desktop */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+            gap: '1.5rem',
+            alignItems: 'stretch',
+          }}>
+            {/* Left Column: The Standing Safety Worker with TallyUP Report Board (Clean, Professional & Sophisticated) */}
+            {/* Left Column: Sophisticated Blended Frontline Worker Holding Board (Pure illustration with no extra text/icons) */}
             <div style={{
-              backgroundColor: '#0e1113',
-              border: '1px solid #24292f',
-              borderRadius: '20px',
-              padding: '0.85rem 1rem',
+              backgroundColor: '#0f172a',
+              border: '1px solid #1e293b',
+              borderRadius: '24px',
+              overflow: 'hidden',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.85rem',
+              justifyContent: 'center',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6)',
               position: 'relative',
-              overflow: 'hidden',
+              padding: '1rem',
             }}>
               <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '14px',
-                backgroundColor: '#08090a',
-                border: '1px solid #a3e635',
+                position: 'relative',
+                width: '100%',
+                height: '460px',
+                borderRadius: '18px',
                 overflow: 'hidden',
-                flexShrink: 0,
+                backgroundColor: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}>
                 <img
-                  src="/assets/worker_shield_mascot.png"
-                  alt="Safety First"
-                  style={{ width: '40px', height: '40px', objectFit: 'contain' }}
+                  src="/assets/standing_worker_tallyup_board.png"
+                  alt="TallyUP Frontline Verified Worker Shift Report"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    objectPosition: 'center',
+                  }}
                 />
               </div>
-
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 900, color: '#ffffff', textTransform: 'uppercase' }}>
-                    Work Safe. Go Home Safe.
-                  </span>
-                  <span className="badge-lime" style={{ fontSize: '0.62rem' }}>
-                    184D SAFE
-                  </span>
-                </div>
-                <div style={{ fontSize: '0.68rem', color: '#a3e635', fontFamily: 'var(--font-mono)', fontWeight: 700, marginTop: '2px' }}>
-                  OBSERVE • REPORT • PREVENT • +₹250 REWARD
-                </div>
-              </div>
             </div>
 
-            {/* Live Shift Status Card */}
-            <div style={{
-              backgroundColor: '#14171a',
-              border: isShiftActive ? '1px solid #a3e635' : '1px solid #24292f',
-              borderRadius: '22px',
-              padding: '1.25rem',
-              boxShadow: isShiftActive ? '0 0 25px rgba(163, 230, 53, 0.2)' : 'none',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <div style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    backgroundColor: isShiftActive ? '#a3e635' : '#8b949e',
-                    boxShadow: isShiftActive ? '0 0 10px #a3e635' : 'none',
-                  }} />
-                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: isShiftActive ? '#a3e635' : '#8b949e', textTransform: 'uppercase' }}>
-                    {isShiftActive ? 'Active Shift • Recording' : 'Standby • Geotag Ready'}
-                  </span>
-                </div>
-
-                {isShiftActive && (
-                  <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, color: '#ffffff', fontSize: '1rem' }}>
-                    {formatTimer(elapsedSeconds)}
-                  </span>
-                )}
-              </div>
-
-              {/* Big Solid Lime Action Button (Matches attached image) */}
-              <button
-                onClick={() => {
-                  if (isShiftActive) {
-                    clockOut();
-                  } else {
-                    handleOpenGeotagModal();
-                  }
-                }}
-                className="btn-lime-primary"
-                style={{
-                  width: '100%',
-                  padding: '1.15rem',
-                  fontSize: '1rem',
-                  borderRadius: '16px',
-                }}
-              >
-                <Camera size={19} />
-                <span>{isShiftActive ? 'Clock Out & Save Block' : 'Geotag Photo Check-In'}</span>
-              </button>
-            </div>
-
-            {/* Two-Column Telemetry Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-              {/* Tile: My Tally & Wage Guardian */}
-              <button
-                onClick={() => setActiveTab('PAY')}
-                className="tactile-carbon-tile"
-                style={{
-                  borderColor: wageAudit.isUnderpaid ? '#ff4757' : '#24292f',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                  <TrendingUp size={22} style={{ color: wageAudit.isUnderpaid ? '#ff4757' : '#a3e635' }} />
-                  {wageAudit.isUnderpaid && (
-                    <span style={{
-                      fontSize: '0.65rem',
-                      backgroundColor: 'rgba(255, 71, 87, 0.2)',
-                      color: '#ff4757',
-                      padding: '0.15rem 0.45rem',
-                      borderRadius: '9999px',
-                      fontWeight: 800,
-                    }}>
-                      -₹{wageAudit.discrepancyAmount}
-                    </span>
-                  )}
-                </div>
-                <div style={{ marginTop: '0.75rem' }}>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff' }}>Wage Guardian</div>
-                  <div style={{ fontSize: '0.7rem', color: '#8b949e', marginTop: '2px' }}>
-                    {wageAudit.isUnderpaid ? 'Underpayment detected' : 'Hours audited & clear'}
-                  </div>
-                </div>
-              </button>
-
-              {/* Tile: Report Hazard (+₹250 Reward) */}
-              <button
-                onClick={() => setActiveTab('HAZARD')}
-                className="tactile-carbon-tile"
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                  <ShieldAlert size={22} style={{ color: '#ff4757' }} />
-                  <span style={{
-                    fontSize: '0.65rem',
-                    backgroundColor: 'rgba(163, 230, 53, 0.2)',
-                    color: '#a3e635',
-                    padding: '0.15rem 0.45rem',
-                    borderRadius: '9999px',
-                    fontWeight: 800,
-                  }}>
-                    +₹250 Reward
-                  </span>
-                </div>
-                <div style={{ marginTop: '0.75rem' }}>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff' }}>Report Hazard</div>
-                  <div style={{ fontSize: '0.7rem', color: '#8b949e', marginTop: '2px' }}>
-                    Voice & photo in native tongue
-                  </div>
-                </div>
-              </button>
-            </div>
-
-            {/* Cryptographic Pocket Witness Receipt Card */}
-            {latestBlock && (
+            {/* Right Column: Shift Management, Telemetry & Proof Controls */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* Card 1: Shift Status & Geotag Camera Check-In */}
               <div style={{
-                backgroundColor: '#14171a',
-                border: '1px solid #24292f',
-                borderRadius: '20px',
-                padding: '1.15rem',
+                backgroundColor: '#0f172a',
+                border: isShiftActive ? '2px solid #10b981' : '1px solid #1e293b',
+                borderRadius: '24px',
+                padding: '1.5rem',
+                boxShadow: isShiftActive ? '0 0 30px rgba(16, 185, 129, 0.2)' : 'none',
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <QrCode size={18} style={{ color: '#a3e635' }} />
-                    <span style={{ fontWeight: 800, fontSize: '0.85rem', color: '#ffffff', textTransform: 'uppercase' }}>
-                      Pocket Witness Block
-                    </span>
-                  </div>
-                  <span className="badge-lime">
-                    {latestBlock.verifiedReceiptCode}
-                  </span>
-                </div>
-
-                <div style={{
-                  backgroundColor: '#08090a',
-                  borderRadius: '12px',
-                  padding: '0.75rem',
-                  fontSize: '0.75rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.35rem',
-                  border: '1px solid #1a1e22',
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#8b949e' }}>Shift Duration:</span>
-                    <span style={{ fontWeight: 700, color: '#f4fbe8' }}>{latestBlock.totalHours} hrs ({latestBlock.overtimeHours} OT)</span>
-                  </div>
-
-                  {latestBlock.geotagProof && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#a3e635' }}>
-                      <span>GPS Geotag:</span>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem' }}>
-                        {latestBlock.geotagProof.latitude}°N, {latestBlock.geotagProof.longitude}°E ({latestBlock.geotagProof.siteDistanceMeters}m inside)
-                      </span>
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed #24292f', paddingTop: '0.35rem' }}>
-                    <span style={{ color: '#8b949e' }}>SHA-256 Stamp:</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', color: '#a3e635', fontSize: '0.68rem' }}>
-                      {latestBlock.hash.substring(0, 16)}...
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{
+                      width: '10px',
+                      height: '10px',
+                      borderRadius: '50%',
+                      backgroundColor: isShiftActive ? '#10b981' : '#64748b',
+                      boxShadow: isShiftActive ? '0 0 12px #10b981' : 'none',
+                    }} />
+                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: isShiftActive ? '#34d399' : '#94a3b8', textTransform: 'uppercase' }}>
+                      {isShiftActive ? (t.onDuty || 'On Duty — Geotagged Active') : (t.offDuty || 'Standby — Geotag Ready')}
                     </span>
                   </div>
 
-                  {latestBlock.adminCountersigned && (
-                    <div style={{
-                      backgroundColor: 'rgba(163, 230, 53, 0.1)',
-                      color: '#a3e635',
-                      padding: '0.3rem 0.5rem',
-                      borderRadius: '6px',
-                      fontSize: '0.68rem',
-                      fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.3rem',
-                    }}>
-                      <Check size={12} />
-                      <span>Supervisor Countersigned: {latestBlock.countersignedBy}</span>
-                    </div>
+                  {isShiftActive && (
+                    <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, color: '#f8fafc', fontSize: '1.15rem' }}>
+                      {formatTimer(elapsedSeconds)}
+                    </span>
                   )}
                 </div>
-              </div>
-            )}
 
-            {/* Quick Action List: Insurance & Wallet */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-              <button
-                onClick={() => setActiveTab('INSURANCE')}
-                style={{
-                  padding: '0.85rem',
-                  borderRadius: '16px',
-                  backgroundColor: '#14171a',
-                  border: '1px solid #24292f',
-                  textAlign: 'left',
-                }}
-              >
-                <Shield size={20} style={{ color: '#a3e635' }} />
-                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#ffffff', marginTop: '0.4rem' }}>
-                  Insurance Cover
-                </div>
-                <div style={{ fontSize: '0.68rem', color: '#8b949e' }}>
-                  PMSBY & PM-JAY Active
-                </div>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('WALLET')}
-                style={{
-                  padding: '0.85rem',
-                  borderRadius: '16px',
-                  backgroundColor: '#14171a',
-                  border: '1px solid #24292f',
-                  textAlign: 'left',
-                }}
-              >
-                <Wallet size={20} style={{ color: '#a3e635' }} />
-                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#ffffff', marginTop: '0.4rem' }}>
-                  Wallet Payout
-                </div>
-                <div style={{ fontSize: '0.68rem', color: '#8b949e' }}>
-                  Withdraw to UPI
-                </div>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ===================================================================
-            VIEW 2: INSURANCE POLICIES HUB
-           =================================================================== */}
-        {activeTab === 'INSURANCE' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <button
-              onClick={() => setActiveTab('HOME')}
-              style={{ fontSize: '0.8rem', color: '#a3e635', fontWeight: 800, alignSelf: 'flex-start', fontFamily: 'var(--font-display)' }}
-            >
-              ← BACK TO HOME
-            </button>
-
-            <div style={{
-              backgroundColor: '#14171a',
-              border: '1px solid #24292f',
-              borderRadius: '22px',
-              padding: '1.25rem',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                <Shield size={22} style={{ color: '#a3e635' }} />
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#ffffff' }}>
-                  Active Insurance Policies
-                </h3>
-              </div>
-              <p style={{ fontSize: '0.75rem', color: '#8b949e', marginBottom: '1rem' }}>
-                Statutory government and site welfare policies tied to your verified attendance.
-              </p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                {insurances.map((ins) => (
-                  <div
-                    key={ins.id}
-                    style={{
-                      backgroundColor: '#08090a',
-                      border: '1px solid #1a1e22',
-                      borderRadius: '14px',
-                      padding: '1rem',
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#ffffff', maxWidth: '75%' }}>
-                        {ins.name}
-                      </div>
-                      <span className="badge-lime" style={{ fontSize: '0.65rem' }}>
-                        {ins.status}
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', margin: '0.65rem 0', fontSize: '0.8rem' }}>
-                      <span style={{ color: '#8b949e' }}>Coverage:</span>
-                      <span style={{ fontWeight: 900, color: '#a3e635', fontSize: '1rem' }}>
-                        {ins.coverageAmount}
-                      </span>
-                    </div>
-
-                    <div style={{ fontSize: '0.72rem', color: '#8b949e', marginBottom: '0.5rem' }}>
-                      {ins.details}
-                    </div>
-
-                    <div style={{
-                      backgroundColor: '#14171a',
-                      padding: '0.45rem 0.65rem',
-                      borderRadius: '8px',
-                      fontSize: '0.7rem',
-                      color: '#ffffff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}>
-                      <span>Emergency Claim Helpline:</span>
-                      <a href={`tel:${ins.claimHelpline.split(' ')[0]}`} style={{ color: '#a3e635', fontWeight: 800 }}>
-                        {ins.claimHelpline.split(' ')[0]}
-                      </a>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ===================================================================
-            VIEW 3: WALLET & INSTANT UPI WITHDRAWAL
-           =================================================================== */}
-        {activeTab === 'WALLET' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <button
-              onClick={() => setActiveTab('HOME')}
-              style={{ fontSize: '0.8rem', color: '#a3e635', fontWeight: 800, alignSelf: 'flex-start', fontFamily: 'var(--font-display)' }}
-            >
-              ← BACK TO HOME
-            </button>
-
-            {/* Wallet Overview Card */}
-            <div style={{
-              backgroundColor: '#14171a',
-              border: '1px solid #a3e635',
-              borderRadius: '24px',
-              padding: '1.5rem',
-              boxShadow: '0 0 30px rgba(163, 230, 53, 0.15)',
-            }}>
-              <div style={{ fontSize: '0.75rem', color: '#8b949e', textTransform: 'uppercase', fontWeight: 700 }}>
-                Available Balance
-              </div>
-              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#a3e635', fontFamily: 'var(--font-mono)', margin: '0.25rem 0' }}>
-                ₹{currentWorker.walletBalance}
-              </div>
-              <div style={{ fontSize: '0.75rem', color: '#8b949e' }}>
-                Includes ₹{currentWorker.rewardBalance} from verified safety hazard reports
-              </div>
-
-              <button
-                onClick={() => setShowWithdrawModal(true)}
-                className="btn-lime-primary"
-                style={{ width: '100%', marginTop: '1.25rem', padding: '0.9rem', borderRadius: '14px' }}
-              >
-                <ArrowUpRight size={18} />
-                <span>WITHDRAW TO UPI / BANK</span>
-              </button>
-            </div>
-
-            {/* Transaction Passbook */}
-            <div style={{
-              backgroundColor: '#14171a',
-              border: '1px solid #24292f',
-              borderRadius: '20px',
-              padding: '1.25rem',
-            }}>
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.75rem' }}>
-                Recent Payout Passbook
-              </h4>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                {transactions.map((tx) => (
-                  <div
-                    key={tx.id}
-                    style={{
-                      backgroundColor: '#08090a',
-                      border: '1px solid #1a1e22',
-                      borderRadius: '12px',
-                      padding: '0.75rem',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#ffffff' }}>
-                        {tx.note}
-                      </div>
-                      <div style={{ fontSize: '0.68rem', color: '#8b949e', fontFamily: 'var(--font-mono)' }}>
-                        {tx.date} • {tx.referenceUtr}
-                      </div>
-                    </div>
-                    <div style={{
-                      fontWeight: 900,
-                      fontSize: '0.95rem',
-                      color: tx.type === 'UPI_WITHDRAWAL' ? '#ff4757' : '#a3e635',
-                      fontFamily: 'var(--font-mono)',
-                    }}>
-                      {tx.type === 'UPI_WITHDRAWAL' ? '-' : '+'}₹{tx.amount}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ===================================================================
-            VIEW 4: WAGE GUARDIAN AUDIT & VOICE READOUT
-           =================================================================== */}
-        {activeTab === 'PAY' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <button
-              onClick={() => setActiveTab('HOME')}
-              style={{ fontSize: '0.8rem', color: '#a3e635', fontWeight: 800, alignSelf: 'flex-start', fontFamily: 'var(--font-display)' }}
-            >
-              ← BACK TO HOME
-            </button>
-
-            {wageAudit.isUnderpaid && (
-              <div style={{
-                backgroundColor: 'rgba(255, 71, 87, 0.12)',
-                border: '2px solid #ff4757',
-                borderRadius: '20px',
-                padding: '1.25rem',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ff4757', marginBottom: '0.4rem' }}>
-                  <AlertTriangle size={20} />
-                  <h3 style={{ fontSize: '1rem', fontWeight: 900, textTransform: 'uppercase' }}>
-                    Underpayment Discrepancy Found
-                  </h3>
-                </div>
-                <p style={{ fontSize: '0.82rem', color: '#ffb8b8', lineHeight: 1.4 }}>
-                  Verified ledger indicates you are owed <strong>₹{wageAudit.discrepancyAmount}</strong> for completed overtime.
-                </p>
-
+                {/* Primary Action Button */}
                 <button
-                  onClick={handlePlayVoicePayslip}
+                  onClick={() => {
+                    if (isShiftActive) {
+                      clockOut();
+                      playAuditoryChime('SUCCESS');
+                    } else {
+                      handleOpenGeotagModal();
+                    }
+                  }}
+                  className="btn-lime-primary"
                   style={{
-                    marginTop: '1rem',
                     width: '100%',
-                    backgroundColor: '#ff4757',
-                    color: '#ffffff',
-                    padding: '0.85rem',
-                    borderRadius: '12px',
-                    fontWeight: 800,
-                    fontFamily: 'var(--font-display)',
+                    padding: '1.15rem',
+                    fontSize: '1rem',
+                    borderRadius: '16px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '0.6rem',
-                    boxShadow: '0 4px 15px rgba(255, 71, 87, 0.4)',
+                    gap: '0.65rem',
                   }}
                 >
-                  {isPlayingAudio ? <VolumeX size={18} /> : <Volume2 size={18} />}
-                  <span>{isPlayingAudio ? 'STOP VOICE' : 'LISTEN TO PAYSLIP (VOICE)'}</span>
+                  <Camera size={20} />
+                  <span>
+                    {isShiftActive ? 'CLOCK OUT SHIFT' : (t.geotagCheckIn || 'GEOTAG SELFIE CHECK-IN')}
+                  </span>
                 </button>
-              </div>
-            )}
 
-            <div style={{
-              backgroundColor: '#14171a',
-              border: '1px solid #24292f',
-              borderRadius: '20px',
-              padding: '1.25rem',
-            }}>
-              <h4 style={{ fontWeight: 800, fontSize: '0.95rem', color: '#ffffff', marginBottom: '1rem' }}>
-                Verified Hours Breakdown
-              </h4>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', fontSize: '0.85rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#8b949e' }}>Regular Hours:</span>
-                  <span style={{ fontWeight: 700, color: '#ffffff' }}>{wageAudit.verifiedRegularHours}h × ₹{wageAudit.hourlyRate}/h</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#8b949e' }}>Overtime Hours (2x):</span>
-                  <span style={{ fontWeight: 800, color: '#a3e635' }}>
-                    {wageAudit.verifiedOvertimeHours}h × ₹{wageAudit.hourlyRate * 2}/h
-                  </span>
-                </div>
-
-                <div style={{ borderTop: '1px solid #24292f', margin: '0.35rem 0' }} />
-
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#8b949e' }}>Verified Statutory Wage:</span>
-                  <span style={{ fontWeight: 900, fontSize: '1.1rem', color: '#a3e635' }}>
-                    ₹{wageAudit.calculatedLegitimatePay}
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#8b949e' }}>Contractor Disbursed:</span>
-                  <span style={{ fontWeight: 700, color: '#8b949e' }}>
-                    ₹{wageAudit.employerDeclaredPay}
-                  </span>
-                </div>
-
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  backgroundColor: 'rgba(255, 71, 87, 0.15)',
-                  padding: '0.65rem 0.85rem',
-                  borderRadius: '10px',
-                  color: '#ff4757',
-                  fontWeight: 900,
-                  marginTop: '0.5rem',
-                }}>
-                  <span>Shortfall Owed to Worker:</span>
-                  <span>+₹{wageAudit.discrepancyAmount}</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1rem', fontSize: '0.75rem', color: '#94a3b8' }}>
+                  <span>📍 Pier 14 Viaduct Centroid (9.9816° N, 76.2999° E)</span>
+                  <span style={{ color: '#34d399', fontWeight: 700 }}>300m Geofenced</span>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
 
-        {/* ===================================================================
-            VIEW 5: REPORT HAZARD WITH PHOTO & +₹250 REWARD
-           =================================================================== */}
-        {activeTab === 'HAZARD' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <button
-              onClick={() => setActiveTab('HOME')}
-              style={{ fontSize: '0.8rem', color: '#a3e635', fontWeight: 800, alignSelf: 'flex-start', fontFamily: 'var(--font-display)' }}
-            >
-              ← BACK TO HOME
-            </button>
-
-            {hazardSubmittedSuccess && (
-              <div style={{
-                backgroundColor: 'rgba(163, 230, 53, 0.15)',
-                border: '1px solid #a3e635',
-                color: '#a3e635',
-                padding: '0.85rem',
-                borderRadius: '14px',
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                fontSize: '0.85rem',
-              }}>
-                <CheckCircle2 size={18} />
-                <span>Hazard logged! Once verified by engineer, +₹250 will be credited to your wallet.</span>
-              </div>
-            )}
-
-            <div style={{
-              backgroundColor: '#14171a',
-              border: '1px solid #24292f',
-              borderRadius: '20px',
-              padding: '1.25rem',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#ffffff', textTransform: 'uppercase' }}>
-                  Report Site Hazard
-                </h3>
-                <span className="badge-lime">+₹250 Reward</span>
-              </div>
-
-              <p style={{ fontSize: '0.75rem', color: '#8b949e', marginBottom: '1rem' }}>
-                Every verified hazard pays you a ₹250 vigilance reward. Select incident classification & hazard type from the industrial safety catalog.
-              </p>
-
-              {/* Step A: Incident Classification Selector (Image 1) */}
-              <div style={{ marginBottom: '1.25rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#a3e635', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>
-                    1. Incident Classification
-                  </label>
-                  <span style={{ fontSize: '0.68rem', color: '#8b949e' }}>
-                    Right Action Saves Lives
-                  </span>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.45rem', marginBottom: '0.65rem' }}>
-                  {(['NEAR_MISS', 'FAC', 'MTC', 'RWC', 'LTI', 'FATALITY'] as IncidentClassification[]).map((code) => {
-                    const detail = INCIDENT_CLASSIFICATIONS[code];
-                    const isSelected = selectedClassification === code;
-                    return (
-                      <button
-                        key={code}
-                        type="button"
-                        onClick={() => setSelectedClassification(code)}
-                        style={{
-                          padding: '0.6rem 0.4rem',
-                          borderRadius: '10px',
-                          border: isSelected ? `2px solid ${detail.color}` : '1px solid #24292f',
-                          backgroundColor: isSelected ? detail.bgRgba : '#08090a',
-                          color: isSelected ? '#ffffff' : '#8b949e',
-                          fontWeight: 800,
-                          fontSize: '0.72rem',
-                          textAlign: 'center',
-                          cursor: 'pointer',
-                          boxShadow: isSelected ? `0 0 12px ${detail.bgRgba}` : 'none',
-                        }}
-                      >
-                        <div>{detail.shortLabel}</div>
-                        <div style={{ fontSize: '0.6rem', color: detail.color, marginTop: '2px', fontWeight: 700 }}>
-                          {code === 'NEAR_MISS' ? 'No Injury' : code === 'FAC' ? 'First Aid' : code === 'MTC' ? 'Medical' : code === 'RWC' ? 'Light Duty' : code === 'LTI' ? '1 Day Lost' : 'Life Critical'}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Selected Classification Callout Card */}
-                {selectedClassification && (
-                  <div style={{
-                    backgroundColor: '#08090a',
-                    border: `1px solid ${INCIDENT_CLASSIFICATIONS[selectedClassification].borderColor}`,
-                    borderRadius: '12px',
-                    padding: '0.65rem 0.85rem',
-                    fontSize: '0.72rem',
-                    marginBottom: '1rem',
-                  }}>
-                    <div style={{ fontWeight: 800, color: INCIDENT_CLASSIFICATIONS[selectedClassification].color, marginBottom: '2px' }}>
-                      {INCIDENT_CLASSIFICATIONS[selectedClassification].fullTitle} — {INCIDENT_CLASSIFICATIONS[selectedClassification].tagline}
-                    </div>
-                    <div style={{ color: '#8b949e', lineHeight: 1.35 }}>
-                      <strong>Definition:</strong> {INCIDENT_CLASSIFICATIONS[selectedClassification].definition}
-                    </div>
-                    <div style={{ color: '#8b949e', marginTop: '2px', lineHeight: 1.35 }}>
-                      <strong>Example:</strong> {INCIDENT_CLASSIFICATIONS[selectedClassification].example}
+              {/* Card 2: Two Interactive Telemetry Tiles (Wage Guardian + Safety Vigilance) */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                {/* Tile 1: Wage Guardian Audio Audit */}
+                <button
+                  onClick={() => setActiveTab('PAY')}
+                  className="tactile-carbon-tile"
+                  style={{
+                    borderColor: wageAudit.isUnderpaid ? '#ef4444' : '#1e293b',
+                    padding: '1.25rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                    <TrendingUp size={24} style={{ color: wageAudit.isUnderpaid ? '#ef4444' : '#10b981' }} />
+                    {wageAudit.isUnderpaid && (
+                      <span className="badge-danger" style={{ fontSize: '0.65rem' }}>
+                        -₹{wageAudit.discrepancyAmount} Owed
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ marginTop: '0.85rem' }}>
+                    <div style={{ fontSize: '1rem', fontWeight: 800, color: '#f8fafc' }}>Wage Guardian</div>
+                    <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '3px' }}>
+                      {wageAudit.isUnderpaid ? 'Underpayment detected' : '8.0h audited & clear'}
                     </div>
                   </div>
-                )}
+                </button>
+
+                {/* Tile 2: Safety Vigilance Reward Card */}
+                <button
+                  onClick={() => setActiveTab('HAZARD')}
+                  className="tactile-carbon-tile"
+                  style={{ padding: '1.25rem' }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                    <ShieldAlert size={24} style={{ color: '#f59e0b' }} />
+                    <span className="badge-lime" style={{ fontSize: '0.65rem' }}>
+                      +₹250 Reward
+                    </span>
+                  </div>
+                  <div style={{ marginTop: '0.85rem' }}>
+                    <div style={{ fontSize: '1rem', fontWeight: 800, color: '#f8fafc' }}>Report Hazard</div>
+                    <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '3px' }}>
+                      Photo & voice note in native tongue
+                    </div>
+                  </div>
+                </button>
               </div>
 
-              {/* Step B: Work Safety Icon Pack Selector (Image 2) */}
-              <div style={{ marginBottom: '1.25rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#a3e635', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>
-                    2. Safety Category (Icon Pack)
-                  </label>
-                  <span style={{ fontSize: '0.68rem', color: '#8b949e' }}>Tap to select</span>
-                </div>
-
+              {/* Card 3: Pocket Witness Cryptographic Ledger Card */}
+              {latestBlock && (
                 <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(5, 1fr)',
-                  gap: '0.5rem',
-                  marginBottom: '0.75rem',
+                  backgroundColor: '#0f172a',
+                  border: '1px solid #1e293b',
+                  borderRadius: '20px',
+                  padding: '1.25rem',
                 }}>
-                  {SAFETY_HAZARD_CATEGORIES.map((cat) => {
-                    const isSelected = selectedHazardCategory === cat.id;
-                    const renderIcon = () => {
-                      switch (cat.iconSymbol) {
-                        case 'Zap': return <Zap size={18} />;
-                        case 'Layers': return <Layers size={18} />;
-                        case 'Droplets': return <Droplets size={18} />;
-                        case 'ShieldAlert': return <ShieldAlert size={18} />;
-                        case 'Flame': return <Flame size={18} />;
-                        case 'Anchor': return <Anchor size={18} />;
-                        case 'Wind': return <Wind size={18} />;
-                        case 'Construction': return <Construction size={18} />;
-                        case 'Volume2': return <Volume2 size={18} />;
-                        case 'Lock': return <Lock size={18} />;
-                        default: return <AlertTriangle size={18} />;
-                      }
-                    };
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <QrCode size={18} style={{ color: '#10b981' }} />
+                      <span style={{ fontWeight: 800, fontSize: '0.85rem', color: '#f8fafc', textTransform: 'uppercase' }}>
+                        Pocket Witness Block
+                      </span>
+                    </div>
+                    <span className="badge-lime">
+                      {latestBlock.verifiedReceiptCode}
+                    </span>
+                  </div>
 
-                    return (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedHazardCategory(cat.id);
-                          setHazardText(cat.exampleDetail);
-                          setSelectedClassification(cat.defaultClassification);
-                        }}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '0.25rem',
-                          padding: '0.55rem 0.25rem',
-                          borderRadius: '12px',
-                          border: isSelected ? '2px solid #a3e635' : '1px solid #24292f',
-                          backgroundColor: isSelected ? 'rgba(163, 230, 53, 0.15)' : '#08090a',
-                          color: isSelected ? '#a3e635' : '#8b949e',
-                          cursor: 'pointer',
-                          boxShadow: isSelected ? '0 0 15px rgba(163, 230, 53, 0.25)' : 'none',
-                        }}
-                        title={cat.name}
-                      >
-                        {renderIcon()}
-                        <span style={{ fontSize: '0.58rem', fontWeight: 800, textAlign: 'center', lineHeight: 1.1 }}>
-                          {cat.name.split(' ')[0]}
-                        </span>
-                      </button>
-                    );
-                  })}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.75rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#94a3b8' }}>Block Hash:</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', color: '#34d399' }}>
+                        {latestBlock.hash.substring(0, 20)}...
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#94a3b8' }}>GPS Proof:</span>
+                      <span style={{ color: '#cbd5e1' }}>
+                        {latestBlock.geotagProof?.latitude}° N, {latestBlock.geotagProof?.longitude}° E (±{latestBlock.geotagProof?.accuracyMeters}m)
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#94a3b8' }}>Supervisor Countersign:</span>
+                      <span style={{ color: latestBlock.adminCountersigned ? '#10b981' : '#f59e0b', fontWeight: 700 }}>
+                        {latestBlock.adminCountersigned ? '✓ Signed by Lead Engineer' : '⏳ Pending Counter-check'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
-              {/* Location Zone */}
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#8b949e', textTransform: 'uppercase', marginBottom: '0.35rem', display: 'block' }}>
-                  Site Zone
+      {/* =====================================================================
+          VIEW 2: HAZARD REPORTING (SIMPLIFIED & INTUITIVE FOR WORKERS)
+         ===================================================================== */}
+      {activeTab === 'HAZARD' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '840px', margin: '0 auto', width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <button
+              onClick={() => setActiveTab('HOME')}
+              style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 800 }}
+            >
+              ← Back to Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('MY_REPORTS')}
+              style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+            >
+              <ListChecks size={16} />
+              <span>Track My Tickets ({myReportedHazards.length})</span>
+            </button>
+          </div>
+
+          <div style={{
+            backgroundColor: '#0f172a',
+            border: '1px solid #1e293b',
+            borderRadius: '24px',
+            padding: '1.75rem',
+            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <div>
+                <h2 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#f8fafc' }}>
+                  Report Site Hazard
+                </h2>
+                <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>
+                  Every verified hazard pays you a ₹250 cash vigilance reward to your wallet.
+                </p>
+              </div>
+              <span className="badge-lime" style={{ fontSize: '0.75rem' }}>+₹250 REWARD</span>
+            </div>
+
+            {/* Step 1: Visual Hazard Category Selector */}
+            <div style={{ margin: '1.5rem 0' }}>
+              <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#34d399', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', marginBottom: '0.65rem', display: 'block' }}>
+                1. Select Hazard Type (Tap to Choose)
+              </label>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.65rem' }}>
+                {[
+                  { id: 'scaffolding_height', label: 'Scaffold & Height', icon: <Layers size={22} />, desc: 'Loose planks, no harness' },
+                  { id: 'electrical_shock', label: 'Electrical Shock', icon: <Zap size={22} />, desc: 'Exposed wire, wet box' },
+                  { id: 'slip_trip_wet', label: 'Wet Floor / Slip', icon: <Droplets size={22} />, desc: 'Oil slick, gravel spill' },
+                  { id: 'missing_ppe', label: 'Missing Safety Gear', icon: <ShieldAlert size={22} />, desc: 'No helmet, worn boots' },
+                  { id: 'fire_hot_work', label: 'Fire / Sparks', icon: <Flame size={22} />, desc: 'Hot work near diesel' },
+                  { id: 'crane_overhead', label: 'Crane / Heavy Load', icon: <Anchor size={22} />, desc: 'Overhead hoisted rebar' },
+                ].map((item) => {
+                  const isSelected = selectedHazardCategory === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedHazardCategory(item.id);
+                        playAuditoryChime('START');
+                      }}
+                      style={{
+                        padding: '0.85rem 0.5rem',
+                        borderRadius: '16px',
+                        backgroundColor: isSelected ? 'rgba(16, 185, 129, 0.15)' : '#131c2a',
+                        border: isSelected ? '2px solid #10b981' : '1px solid #1e293b',
+                        color: isSelected ? '#34d399' : '#94a3b8',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.4rem',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {item.icon}
+                      <span style={{ fontSize: '0.78rem', fontWeight: 800, color: isSelected ? '#ffffff' : '#cbd5e1' }}>
+                        {item.label}
+                      </span>
+                      <span style={{ fontSize: '0.65rem', color: '#64748b', lineHeight: 1.2 }}>
+                        {item.desc}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Step 2: Photo Evidence Capture / Upload */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#34d399', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>
+                  2. Photo Evidence (Snap or Upload)
                 </label>
-                <select
-                  value={selectedZone}
-                  onChange={(e) => setSelectedZone(e.target.value)}
+                <label
                   style={{
-                    width: '100%',
-                    padding: '0.65rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    color: '#34d399',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    backgroundColor: '#131c2a',
+                    padding: '0.35rem 0.75rem',
                     borderRadius: '10px',
-                    border: '1px solid #24292f',
-                    fontSize: '0.8rem',
-                    backgroundColor: '#08090a',
-                    color: '#ffffff',
+                    border: '1px solid #1e293b',
                   }}
                 >
-                  {sector.zones.map((z) => (
-                    <option key={z} value={z}>{z}</option>
-                  ))}
-                </select>
+                  <Camera size={14} />
+                  <span>Choose / Snap Photo</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                          setHazardImagePreview(ev.target?.result as string);
+                          playAuditoryChime('SUCCESS');
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                </label>
               </div>
 
-              {/* Voice Prompt Recording Button */}
+              {hazardImagePreview && (
+                <div style={{ position: 'relative', width: '100%', height: '180px', borderRadius: '16px', overflow: 'hidden', border: '1px solid #1e293b' }}>
+                  <img src={hazardImagePreview} alt="Evidence preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    background: 'rgba(9, 13, 18, 0.85)',
+                    padding: '0.45rem 0.85rem',
+                    fontSize: '0.72rem',
+                    color: '#34d399',
+                    fontFamily: 'var(--font-mono)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                  }}>
+                    <span>📸 FORENSIC SITE EVIDENCE ATTACHED</span>
+                    <span>GPS: 9.9816° N, 76.2999° E</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Step 3: Native Voice Prompt Recording or Text Description */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#34d399', textTransform: 'uppercase', fontFamily: 'var(--font-mono)', marginBottom: '0.5rem', display: 'block' }}>
+                3. Voice Note or Details (In Your Language)
+              </label>
+
               <button
+                type="button"
                 onClick={handleVoiceRecordToggle}
                 style={{
                   width: '100%',
                   padding: '1.1rem',
                   borderRadius: '16px',
-                  backgroundColor: isRecording ? '#ff4757' : '#a3e635',
-                  color: isRecording ? '#ffffff' : '#08090a',
-                  fontWeight: 900,
-                  fontFamily: 'var(--font-display)',
-                  fontSize: '0.9rem',
+                  backgroundColor: isRecording ? '#ef4444' : '#131c2a',
+                  border: isRecording ? '2px solid #ef4444' : '1px solid #1e293b',
+                  color: isRecording ? '#ffffff' : '#34d399',
+                  fontWeight: 800,
+                  fontSize: '0.92rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '0.75rem',
-                  marginBottom: '1rem',
+                  marginBottom: '0.85rem',
                 }}
               >
                 <Mic size={22} />
-                <span>{isRecording ? 'RECORDING... SPEAK NOW' : 'HOLD TO SPEAK IN NATIVE LANGUAGE'}</span>
+                <span>{isRecording ? 'RECORDING... SPEAK NOW IN YOUR LANGUAGE' : 'TAP TO SPEAK VOICE NOTE'}</span>
               </button>
 
               <textarea
                 value={hazardText}
                 onChange={(e) => setHazardText(e.target.value)}
-                placeholder="Or type hazard details..."
+                placeholder="Or type hazard details in any language..."
                 rows={3}
                 style={{
                   width: '100%',
-                  padding: '0.75rem',
-                  borderRadius: '10px',
-                  border: '1px solid #24292f',
-                  fontSize: '0.8rem',
-                  backgroundColor: '#08090a',
-                  color: '#ffffff',
-                  marginBottom: '0.75rem',
+                  padding: '0.85rem',
+                  borderRadius: '12px',
+                  border: '1px solid #1e293b',
+                  fontSize: '0.85rem',
+                  backgroundColor: '#090d12',
+                  color: '#f8fafc',
                   fontFamily: 'inherit',
                 }}
               />
-
-              {/* Photo Attachment preview & file uploader */}
-              <div style={{ marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#8b949e', textTransform: 'uppercase' }}>
-                    Hazard Evidence Photo
-                  </label>
-                  <label
-                    style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 800,
-                      color: '#a3e635',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      backgroundColor: '#08090a',
-                      padding: '0.35rem 0.65rem',
-                      borderRadius: '8px',
-                      border: '1px solid #24292f',
-                    }}
-                  >
-                    <Camera size={14} />
-                    <span>Upload / Snap Photo</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      style={{ display: 'none' }}
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (ev) => setHazardImagePreview(ev.target?.result as string);
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                    />
-                  </label>
-                </div>
-
-                {hazardImagePreview && (
-                  <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '1px solid #24292f' }}>
-                    <img src={hazardImagePreview} alt="Hazard preview" style={{ width: '100%', height: '140px', objectFit: 'cover' }} />
-                    <div style={{
-                      position: 'absolute',
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      background: 'rgba(0,0,0,0.7)',
-                      padding: '0.35rem 0.65rem',
-                      fontSize: '0.68rem',
-                      color: '#a3e635',
-                      fontFamily: 'var(--font-mono)',
-                    }}>
-                      📸 FORENSIC SITE PHOTO ATTACHED
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <button
-                onClick={handleSubmitHazard}
-                disabled={!hazardText.trim() || isAnalyzingAi}
-                className="btn-lime-primary"
-                style={{
-                  width: '100%',
-                  borderRadius: '12px',
-                  padding: '0.85rem',
-                  fontSize: '0.9rem',
-                }}
-              >
-                {isAnalyzingAi ? (
-                  <>
-                    <Sparkles size={16} />
-                    <span>Gemini Multimodal Triage...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send size={16} />
-                    <span>SUBMIT HAZARD TICKET</span>
-                  </>
-                )}
-              </button>
             </div>
-          </div>
-        )}
 
-        {/* ===================================================================
-            VIEW 6: SKILL PASSPORT & SUPERVISOR RATING
-           =================================================================== */}
-        {activeTab === 'PASSPORT' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {/* Submit Button */}
             <button
-              onClick={() => setActiveTab('HOME')}
-              style={{ fontSize: '0.8rem', color: '#a3e635', fontWeight: 800, alignSelf: 'flex-start', fontFamily: 'var(--font-display)' }}
-            >
-              ← BACK TO HOME
-            </button>
-
-            <div style={{
-              backgroundColor: '#14171a',
-              border: '1px solid #a3e635',
-              borderRadius: '24px',
-              padding: '1.5rem',
-              textAlign: 'center',
-            }}>
-              <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>
-                {currentWorker.avatar}
-              </div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#ffffff' }}>
-                {currentWorker.name}
-              </h3>
-              <p style={{ fontSize: '0.85rem', color: '#a3e635', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>
-                {currentWorker.tradeRole}
-              </p>
-
-              {/* Supervisor Rating Star Badge */}
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                backgroundColor: 'rgba(255, 165, 2, 0.15)',
-                color: '#ffa502',
-                padding: '0.35rem 0.85rem',
-                borderRadius: '9999px',
-                marginTop: '0.65rem',
-                fontWeight: 800,
-                fontSize: '0.85rem',
-              }}>
-                <Star size={16} fill="#ffa502" />
-                <span>{currentWorker.rating} / 5.0 Trust Score ({currentWorker.ratingCount} Ratings)</span>
-              </div>
-
-              <div style={{
-                backgroundColor: '#ffffff',
-                padding: '1rem',
-                borderRadius: '16px',
-                display: 'inline-block',
-                margin: '1.25rem auto 1rem',
-              }}>
-                <QrCode size={120} style={{ color: '#08090a' }} />
-              </div>
-
-              {/* Endorsements */}
-              <div style={{ textAlign: 'left', marginTop: '1rem' }}>
-                <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#8b949e', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-                  Supervisor Endorsements:
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                  {currentWorker.supervisorEndorsements.map((end, i) => (
-                    <div key={i} style={{
-                      backgroundColor: '#08090a',
-                      border: '1px solid #1a1e22',
-                      padding: '0.45rem 0.65rem',
-                      borderRadius: '8px',
-                      fontSize: '0.75rem',
-                      color: '#a3e635',
-                      fontWeight: 700,
-                    }}>
-                      🏅 {end}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Geotag Photo Camera Modal */}
-      {showGeotagModal && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.85)',
-          backdropFilter: 'blur(10px)',
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '1rem',
-        }}>
-          <div style={{
-            maxWidth: '380px',
-            width: '100%',
-            backgroundColor: '#0e1113',
-            border: '2px solid #a3e635',
-            borderRadius: '24px',
-            padding: '1.25rem',
-            boxShadow: '0 0 40px rgba(163, 230, 53, 0.4)',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#a3e635', fontWeight: 900, fontSize: '0.9rem' }}>
-                <Camera size={18} />
-                <span>GEOTAG PROOF CAPTURE</span>
-              </div>
-              <button onClick={() => setShowGeotagModal(false)} style={{ color: '#8b949e', fontWeight: 800 }}>✕</button>
-            </div>
-
-            {/* Camera Viewfinder with Forensic Watermark Overlay */}
-            <div style={{
-              position: 'relative',
-              borderRadius: '16px',
-              overflow: 'hidden',
-              border: '1px solid #24292f',
-              marginBottom: '1rem',
-            }}>
-              <img src={capturedPhotoUrl} alt="Geotag proof" style={{ width: '100%', height: '220px', objectFit: 'cover' }} />
-
-              {/* Real-time Forensic Watermark */}
-              <div style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                backgroundColor: 'rgba(8, 9, 10, 0.88)',
-                padding: '0.5rem',
-                fontSize: '0.65rem',
-                fontFamily: 'var(--font-mono)',
-                color: '#a3e635',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '2px',
-                borderTop: '1px solid #a3e635',
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>📍 GPS: {geoCoords.lat}° N, {geoCoords.lng}° E</span>
-                  <span>ACC: ±{geoCoords.accuracy}m</span>
-                </div>
-                <div>🏢 SITE: Pier Section 14 (Kochi Metro Viaduct)</div>
-                <div>⏱️ TIMESTAMP: {new Date().toLocaleDateString('en-IN')} {new Date().toLocaleTimeString('en-IN')}</div>
-                <div style={{ color: '#ffffff' }}>🔒 SHA-256 FORENSIC PHOTOGRAPHIC SEAL</div>
-              </div>
-            </div>
-
-            <button
-              onClick={handleConfirmGeotagCheckIn}
+              onClick={handleSubmitHazard}
+              disabled={!hazardText.trim() || isAnalyzingAi}
               className="btn-lime-primary"
-              style={{ width: '100%', padding: '0.95rem', borderRadius: '12px' }}
+              style={{
+                width: '100%',
+                padding: '1.1rem',
+                fontSize: '1rem',
+                borderRadius: '16px',
+              }}
             >
-              <span>CONFIRM & RECORD ON-CHAIN</span>
-              <Check size={18} />
+              {isAnalyzingAi ? (
+                <>
+                  <RefreshCw size={18} className="animate-spin" />
+                  <span>Submitting to Supervisor Queue...</span>
+                </>
+              ) : (
+                <>
+                  <Send size={18} />
+                  <span>SUBMIT HAZARD TICKET (+₹250 REWARD)</span>
+                </>
+              )}
             </button>
           </div>
         </div>
       )}
 
-      {/* Withdrawal Modal */}
+      {/* =====================================================================
+          HAZARD SUBMISSION CONFIRMATION MODAL WITH TICKET TRACKING CODE
+         ===================================================================== */}
+      {submittedTicket && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(9, 13, 18, 0.85)',
+          backdropFilter: 'blur(12px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1.25rem',
+          zIndex: 200,
+          animation: 'fadeIn 0.2s ease forwards',
+        }}>
+          <div style={{
+            maxWidth: '480px',
+            width: '100%',
+            backgroundColor: '#0f172a',
+            border: '2px solid #10b981',
+            borderRadius: '28px',
+            padding: '2rem 1.75rem',
+            textAlign: 'center',
+            boxShadow: '0 25px 70px rgba(0, 0, 0, 0.9), 0 0 30px rgba(16, 185, 129, 0.25)',
+          }}>
+            <div style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              backgroundColor: '#10b981',
+              color: '#090d12',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1.25rem',
+            }}>
+              <Check size={32} strokeWidth={3} />
+            </div>
+
+            <h3 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#f8fafc', marginBottom: '0.35rem' }}>
+              Hazard Ticket Dispatched!
+            </h3>
+            <p style={{ fontSize: '0.82rem', color: '#94a3b8', marginBottom: '1.25rem' }}>
+              Your report has been logged into the supervisor cross-audit radar with SHA-256 integrity.
+            </p>
+
+            {/* Ticket Details Box */}
+            <div style={{
+              backgroundColor: '#131c2a',
+              border: '1px solid #1e293b',
+              borderRadius: '16px',
+              padding: '1rem',
+              textAlign: 'left',
+              marginBottom: '1.5rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.5rem',
+              fontSize: '0.8rem',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#94a3b8' }}>Tracking ID:</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, color: '#34d399' }}>
+                  #{submittedTicket.id.toUpperCase()}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#94a3b8' }}>Category:</span>
+                <span style={{ fontWeight: 700, color: '#ffffff' }}>{submittedTicket.category}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#94a3b8' }}>Reward Status:</span>
+                <span style={{ color: '#f59e0b', fontWeight: 800 }}>+₹250 Pending Verification</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#94a3b8' }}>Live Queue:</span>
+                <span style={{ color: '#10b981', fontWeight: 700 }}>Dispatched to Lead Engineer</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                onClick={() => {
+                  setSubmittedTicket(null);
+                  setActiveTab('MY_REPORTS');
+                }}
+                className="btn-lime-primary"
+                style={{ flex: 1, padding: '0.85rem', borderRadius: '12px', fontSize: '0.85rem' }}
+              >
+                Track Ticket Status
+              </button>
+              <button
+                onClick={() => {
+                  setSubmittedTicket(null);
+                  setActiveTab('HOME');
+                }}
+                className="btn-carbon-secondary"
+                style={{ flex: 1, padding: '0.85rem', borderRadius: '12px', fontSize: '0.85rem' }}
+              >
+                Back to Home
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          VIEW 3: TRACK MY REPORTS (LIVE STATUS TIMELINE FOR WORKERS)
+         ===================================================================== */}
+      {activeTab === 'MY_REPORTS' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '840px', margin: '0 auto', width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <button
+              onClick={() => setActiveTab('HOME')}
+              style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 800 }}
+            >
+              ← Back to Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('HAZARD')}
+              className="btn-lime-primary"
+              style={{ padding: '0.55rem 1rem', fontSize: '0.8rem', borderRadius: '10px' }}
+            >
+              + Report New Hazard
+            </button>
+          </div>
+
+          <div style={{
+            backgroundColor: '#0f172a',
+            border: '1px solid #1e293b',
+            borderRadius: '24px',
+            padding: '1.75rem',
+          }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#f8fafc', marginBottom: '0.35rem' }}>
+              My Safety Hazard Tickets ({myReportedHazards.length})
+            </h3>
+            <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '1.5rem' }}>
+              Track verification status and watch cash vigilance rewards get credited to your wallet.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {myReportedHazards.map((h) => {
+                const isResolved = h.status === 'RESOLVED';
+                const isUnderReview = h.status === 'SUBMITTED';
+                const isInProgress = h.status === 'IN_PROGRESS';
+
+                return (
+                  <div
+                    key={h.id}
+                    style={{
+                      backgroundColor: '#131c2a',
+                      border: isResolved ? '1px solid #10b981' : '1px solid #1e293b',
+                      borderRadius: '18px',
+                      padding: '1.25rem',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#f8fafc' }}>
+                          {h.category}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                          📍 {h.zone.split('—')[0]} • #{h.id.toUpperCase()} • {h.reportedAt}
+                        </div>
+                      </div>
+
+                      <span style={{
+                        padding: '0.25rem 0.65rem',
+                        borderRadius: '9999px',
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        backgroundColor: isResolved ? 'rgba(16, 185, 129, 0.15)' : isInProgress ? 'rgba(6, 182, 212, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                        color: isResolved ? '#34d399' : isInProgress ? '#06b6d4' : '#f59e0b',
+                        border: `1px solid ${isResolved ? '#10b981' : isInProgress ? '#06b6d4' : '#f59e0b'}`,
+                      }}>
+                        {isResolved ? '✓ Verified & +₹250 Paid' : isInProgress ? '⚡ Safety Crew Dispatched' : '⏳ Supervisor Review'}
+                      </span>
+                    </div>
+
+                    <p style={{ fontSize: '0.8rem', color: '#cbd5e1', lineHeight: 1.4, margin: '0.75rem 0' }}>
+                      "{h.translatedEnglishSummary || h.voiceTranscriptRaw}"
+                    </p>
+
+                    {/* Visual Progress Timeline */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      backgroundColor: '#090d12',
+                      borderRadius: '12px',
+                      padding: '0.75rem 1rem',
+                      marginTop: '0.75rem',
+                      fontSize: '0.72rem',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#34d399', fontWeight: 700 }}>
+                        <Check size={14} />
+                        <span>1. Logged</span>
+                      </div>
+                      <span style={{ color: '#334155' }}>➔</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: isInProgress || isResolved ? '#34d399' : '#f59e0b', fontWeight: 700 }}>
+                        {isInProgress || isResolved ? <Check size={14} /> : <Clock size={14} />}
+                        <span>2. Inspected</span>
+                      </div>
+                      <span style={{ color: '#334155' }}>➔</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: isResolved ? '#34d399' : '#64748b', fontWeight: 700 }}>
+                        {isResolved ? <Award size={14} /> : <Lock size={14} />}
+                        <span>3. ₹250 Paid</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          VIEW 4: WAGE GUARDIAN & AUDIO PAYSLIP AUDIT
+         ===================================================================== */}
+      {activeTab === 'PAY' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '840px', margin: '0 auto', width: '100%' }}>
+          <button
+            onClick={() => setActiveTab('HOME')}
+            style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 800, alignSelf: 'flex-start' }}
+          >
+            ← Back to Overview
+          </button>
+
+          {wageAudit.isUnderpaid && (
+            <div style={{
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              border: '2px solid #ef4444',
+              borderRadius: '24px',
+              padding: '1.5rem',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ef4444', marginBottom: '0.5rem' }}>
+                <AlertTriangle size={22} />
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 900 }}>
+                  Underpayment Discrepancy Found
+                </h3>
+              </div>
+              <p style={{ fontSize: '0.85rem', color: '#fca5a5', lineHeight: 1.5 }}>
+                Your cryptographic ledger indicates you completed verified overtime hours. You are owed <strong>₹{wageAudit.discrepancyAmount}</strong> by the contractor.
+              </p>
+
+              <button
+                onClick={handlePlayVoicePayslip}
+                className="btn-lime-primary"
+                style={{
+                  marginTop: '1.25rem',
+                  width: '100%',
+                  padding: '1rem',
+                  borderRadius: '14px',
+                  backgroundColor: '#ef4444',
+                  boxShadow: '0 4px 20px rgba(239, 68, 68, 0.4)',
+                }}
+              >
+                {isPlayingAudio ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                <span>{isPlayingAudio ? 'STOP VOICE' : 'LISTEN TO PAYSLIP IN NATIVE TONGUE'}</span>
+              </button>
+            </div>
+          )}
+
+          <div style={{
+            backgroundColor: '#0f172a',
+            border: '1px solid #1e293b',
+            borderRadius: '24px',
+            padding: '1.5rem',
+          }}>
+            <h4 style={{ fontWeight: 800, fontSize: '1.1rem', color: '#f8fafc', marginBottom: '1.25rem' }}>
+              Verified Hours & Statutory Calculation
+            </h4>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.9rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#94a3b8' }}>Regular Verified Hours:</span>
+                <span style={{ fontWeight: 700, color: '#f8fafc' }}>
+                  {wageAudit.verifiedRegularHours}h × ₹{wageAudit.hourlyRate}/h
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#94a3b8' }}>Overtime Hours (2x Statutory Rate):</span>
+                <span style={{ fontWeight: 800, color: '#34d399' }}>
+                  {wageAudit.verifiedOvertimeHours}h × ₹{wageAudit.hourlyRate * 2}/h
+                </span>
+              </div>
+
+              <div style={{ borderTop: '1px solid #1e293b', margin: '0.5rem 0' }} />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#94a3b8' }}>Verified Statutory Wage:</span>
+                <span style={{ fontWeight: 900, fontSize: '1.2rem', color: '#34d399' }}>
+                  ₹{wageAudit.calculatedLegitimatePay}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#94a3b8' }}>Contractor Disbursed:</span>
+                <span style={{ fontWeight: 700, color: '#94a3b8' }}>
+                  ₹{wageAudit.employerDeclaredPay}
+                </span>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                padding: '0.75rem 1rem',
+                borderRadius: '12px',
+                color: '#ef4444',
+                fontWeight: 900,
+                marginTop: '0.5rem',
+              }}>
+                <span>Discrepancy Owed to You:</span>
+                <span>+₹{wageAudit.discrepancyAmount}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          VIEW 5: WALLET & INSTANT UPI WITHDRAWAL
+         ===================================================================== */}
+      {activeTab === 'WALLET' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '840px', margin: '0 auto', width: '100%' }}>
+          <button
+            onClick={() => setActiveTab('HOME')}
+            style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 800, alignSelf: 'flex-start' }}
+          >
+            ← Back to Overview
+          </button>
+
+          <div style={{
+            backgroundColor: '#0f172a',
+            border: '2px solid #10b981',
+            borderRadius: '24px',
+            padding: '2rem',
+            boxShadow: '0 20px 50px rgba(16, 185, 129, 0.15)',
+          }}>
+            <div style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 800 }}>
+              Available Balance (Wallet)
+            </div>
+            <div style={{ fontSize: '3rem', fontWeight: 900, color: '#34d399', fontFamily: 'var(--font-mono)', margin: '0.35rem 0' }}>
+              ₹{currentWorker.walletBalance}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+              Includes ₹{currentWorker.rewardBalance} from verified safety vigilance rewards
+            </div>
+
+            <button
+              onClick={() => setShowWithdrawModal(true)}
+              className="btn-lime-primary"
+              style={{ width: '100%', marginTop: '1.5rem', padding: '1rem', borderRadius: '16px' }}
+            >
+              <ArrowUpRight size={18} />
+              <span>WITHDRAW EARNINGS TO UPI / BANK</span>
+            </button>
+          </div>
+
+          {/* Passbook */}
+          <div style={{
+            backgroundColor: '#0f172a',
+            border: '1px solid #1e293b',
+            borderRadius: '24px',
+            padding: '1.5rem',
+          }}>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc', marginBottom: '1rem' }}>
+              Payout & Reward Passbook
+            </h4>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {transactions.map((tx) => (
+                <div
+                  key={tx.id}
+                  style={{
+                    backgroundColor: '#131c2a',
+                    border: '1px solid #1e293b',
+                    borderRadius: '14px',
+                    padding: '0.85rem 1rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#f8fafc' }}>
+                      {tx.type === 'UPI_WITHDRAWAL' ? 'UPI Withdrawal' : 'Hazard Vigilance Reward'}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '2px' }}>
+                      {tx.date} • Ref: {tx.referenceUtr}
+                    </div>
+                  </div>
+                  <div style={{
+                    fontWeight: 900,
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '1.05rem',
+                    color: tx.type === 'UPI_WITHDRAWAL' ? '#94a3b8' : '#34d399',
+                  }}>
+                    {tx.type === 'UPI_WITHDRAWAL' ? `-₹${tx.amount}` : `+₹${tx.amount}`}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          VIEW 6: ACTIVE STATUTORY INSURANCE POLICIES
+         ===================================================================== */}
+      {activeTab === 'INSURANCE' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '840px', margin: '0 auto', width: '100%' }}>
+          <button
+            onClick={() => setActiveTab('HOME')}
+            style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 800, alignSelf: 'flex-start' }}
+          >
+            ← Back to Overview
+          </button>
+
+          <div style={{
+            backgroundColor: '#0f172a',
+            border: '1px solid #1e293b',
+            borderRadius: '24px',
+            padding: '1.75rem',
+          }}>
+            <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#f8fafc', marginBottom: '0.35rem' }}>
+              Active Statutory Insurance Policies
+            </h3>
+            <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '1.5rem' }}>
+              Tied to your daily verified attendance on the Kochi Metro Pier 14 construction site.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {insurances.map((ins) => (
+                <div
+                  key={ins.id}
+                  style={{
+                    backgroundColor: '#131c2a',
+                    border: '1px solid #1e293b',
+                    borderRadius: '16px',
+                    padding: '1.25rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ fontWeight: 800, fontSize: '1rem', color: '#f8fafc' }}>
+                      {ins.name}
+                    </div>
+                    <span className="badge-lime">{ins.status}</span>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '0.75rem 0', fontSize: '0.85rem' }}>
+                    <span style={{ color: '#94a3b8' }}>Coverage Protection:</span>
+                    <span style={{ fontWeight: 900, color: '#34d399', fontSize: '1.15rem' }}>
+                      {ins.coverageAmount}
+                    </span>
+                  </div>
+
+                  <p style={{ fontSize: '0.78rem', color: '#94a3b8', lineHeight: 1.4, marginBottom: '0.75rem' }}>
+                    {ins.details}
+                  </p>
+
+                  <div style={{
+                    backgroundColor: '#090d12',
+                    padding: '0.5rem 0.85rem',
+                    borderRadius: '10px',
+                    fontSize: '0.75rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                  }}>
+                    <span style={{ color: '#94a3b8' }}>24x7 Claims Helpline:</span>
+                    <a href={`tel:${ins.claimHelpline.split(' ')[0]}`} style={{ color: '#34d399', fontWeight: 800 }}>
+                      {ins.claimHelpline}
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          VIEW 7: SKILL PASSPORT & SUPERVISOR TRUST RATING
+         ===================================================================== */}
+      {activeTab === 'PASSPORT' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '840px', margin: '0 auto', width: '100%' }}>
+          <button
+            onClick={() => setActiveTab('HOME')}
+            style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 800, alignSelf: 'flex-start' }}
+          >
+            ← Back to Overview
+          </button>
+
+          <div style={{
+            backgroundColor: '#0f172a',
+            border: '2px solid #10b981',
+            borderRadius: '24px',
+            padding: '2rem',
+            textAlign: 'center',
+          }}>
+            <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>
+              {currentWorker.avatar}
+            </div>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#f8fafc' }}>
+              {currentWorker.name}
+            </h3>
+            <p style={{ fontSize: '0.9rem', color: '#34d399', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>
+              {currentWorker.tradeRole}
+            </p>
+
+            {/* Stars */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', margin: '1rem 0' }}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  size={24}
+                  fill={star <= Math.round(currentWorker.rating) ? '#f59e0b' : 'transparent'}
+                  style={{ color: '#f59e0b' }}
+                />
+              ))}
+              <span style={{ fontWeight: 900, fontSize: '1.15rem', color: '#ffffff', marginLeft: '0.5rem' }}>
+                {currentWorker.rating} / 5.0
+              </span>
+            </div>
+
+            <div style={{
+              backgroundColor: '#131c2a',
+              border: '1px solid #1e293b',
+              borderRadius: '16px',
+              padding: '1.25rem',
+              textAlign: 'left',
+              marginTop: '1.25rem',
+            }}>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#f8fafc', marginBottom: '0.65rem' }}>
+                Supervisor Trust Endorsements ({currentWorker.supervisorEndorsements.length})
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {currentWorker.supervisorEndorsements.map((end, idx) => (
+                  <div key={idx} style={{ fontSize: '0.82rem', color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Check size={16} style={{ color: '#10b981', flexShrink: 0 }} />
+                    <span>"{end}"</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          GEOTAG CAMERA CHECK-IN MODAL (KAVACH PROOF ENGINE)
+         ===================================================================== */}
+      {showGeotagModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(9, 13, 18, 0.85)',
+          backdropFilter: 'blur(12px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1.25rem',
+          zIndex: 200,
+          animation: 'fadeIn 0.2s ease forwards',
+        }}>
+          <div style={{
+            maxWidth: '520px',
+            width: '100%',
+            backgroundColor: '#0f172a',
+            border: '2px solid #10b981',
+            borderRadius: '28px',
+            padding: '1.75rem',
+            boxShadow: '0 25px 70px rgba(0, 0, 0, 0.9), 0 0 30px rgba(16, 185, 129, 0.25)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Camera size={20} style={{ color: '#10b981' }} />
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#f8fafc' }}>
+                  Geotagged Photo Proof
+                </h3>
+              </div>
+              <span className="badge-lime">GEOFENCE ACTIVE</span>
+            </div>
+
+            {/* Camera Viewfinder with GPS Watermark */}
+            <div style={{
+              position: 'relative',
+              borderRadius: '20px',
+              overflow: 'hidden',
+              border: '1px solid #1e293b',
+              marginBottom: '1.25rem',
+            }}>
+              <img
+                src={capturedPhotoUrl}
+                alt="Captured Selfie"
+                style={{ width: '100%', height: '260px', objectFit: 'cover' }}
+              />
+
+              <div style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                background: 'rgba(9, 13, 18, 0.85)',
+                backdropFilter: 'blur(6px)',
+                padding: '0.65rem 0.85rem',
+                fontSize: '0.72rem',
+                fontFamily: 'var(--font-mono)',
+                color: '#34d399',
+                display: 'flex',
+                justifyContent: 'space-between',
+              }}>
+                <div>
+                  <div>LAT: {geoCoords.lat}° N • LON: {geoCoords.lng}° E</div>
+                  <div>ACCURACY: ±{geoCoords.accuracy}m • SITE: Pier 14</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div>{new Date().toISOString().substring(11, 19)} UTC</div>
+                  <div style={{ color: '#10b981', fontWeight: 800 }}>✓ IN GEOFENCE</div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                onClick={() => setShowGeotagModal(false)}
+                className="btn-carbon-secondary"
+                style={{ flex: 1, padding: '0.9rem', borderRadius: '12px' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmGeotagCheckIn}
+                className="btn-lime-primary"
+                style={{ flex: 2, padding: '0.9rem', borderRadius: '12px' }}
+              >
+                <span>CONFIRM CHECK-IN PROOF</span>
+                <Check size={18} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          WITHDRAWAL MODAL
+         ===================================================================== */}
       {showWithdrawModal && (
         <div style={{
           position: 'fixed',
           inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.85)',
-          backdropFilter: 'blur(10px)',
-          zIndex: 1000,
+          backgroundColor: 'rgba(9, 13, 18, 0.85)',
+          backdropFilter: 'blur(12px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '1rem',
+          padding: '1.25rem',
+          zIndex: 200,
         }}>
           <div style={{
-            maxWidth: '380px',
+            maxWidth: '460px',
             width: '100%',
-            backgroundColor: '#0e1113',
-            border: '2px solid #a3e635',
-            borderRadius: '24px',
-            padding: '1.5rem',
-            boxShadow: '0 0 40px rgba(163, 230, 53, 0.4)',
+            backgroundColor: '#0f172a',
+            border: '2px solid #10b981',
+            borderRadius: '28px',
+            padding: '1.75rem',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#a3e635', fontWeight: 900, fontSize: '1rem' }}>
-                <Wallet size={20} />
-                <span>INSTANT PAYOUT WITHDRAWAL</span>
-              </div>
-              <button onClick={() => setShowWithdrawModal(false)} style={{ color: '#8b949e', fontWeight: 800 }}>✕</button>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#f8fafc' }}>
+                Instant UPI Withdrawal
+              </h3>
+              <button onClick={() => setShowWithdrawModal(false)} style={{ color: '#94a3b8', fontSize: '1.2rem' }}>✕</button>
             </div>
 
             {withdrawSuccessMsg ? (
               <div style={{
-                backgroundColor: 'rgba(163, 230, 53, 0.15)',
-                color: '#a3e635',
-                padding: '1rem',
-                borderRadius: '12px',
-                fontSize: '0.85rem',
-                fontWeight: 700,
+                backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                color: '#34d399',
+                padding: '1.25rem',
+                borderRadius: '16px',
                 textAlign: 'center',
+                fontWeight: 700,
               }}>
-                <CheckCircle2 size={32} style={{ margin: '0 auto 0.5rem' }} />
-                <div>{withdrawSuccessMsg}</div>
+                ✓ {withdrawSuccessMsg}
               </div>
             ) : (
-              <div>
-                <label style={{ fontSize: '0.75rem', color: '#8b949e', display: 'block', marginBottom: '0.35rem' }}>
-                  Withdrawal Amount (Max: ₹{currentWorker.walletBalance}):
-                </label>
-                <input
-                  type="number"
-                  value={withdrawAmount}
-                  onChange={(e) => setWithdrawAmount(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '10px',
-                    border: '1px solid #24292f',
-                    backgroundColor: '#08090a',
-                    color: '#a3e635',
-                    fontSize: '1.25rem',
-                    fontWeight: 900,
-                    fontFamily: 'var(--font-mono)',
-                    marginBottom: '1rem',
-                  }}
-                />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.35rem' }}>
+                    Enter Amount (₹): Available ₹{currentWorker.walletBalance}
+                  </label>
+                  <input
+                    type="number"
+                    value={withdrawAmount}
+                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      borderRadius: '12px',
+                      backgroundColor: '#131c2a',
+                      border: '1px solid #1e293b',
+                      color: '#ffffff',
+                      fontSize: '1.1rem',
+                      fontWeight: 800,
+                      fontFamily: 'var(--font-mono)',
+                    }}
+                  />
+                </div>
 
-                <label style={{ fontSize: '0.75rem', color: '#8b949e', display: 'block', marginBottom: '0.35rem' }}>
-                  Destination UPI ID:
-                </label>
-                <input
-                  type="text"
-                  value={withdrawUpi}
-                  onChange={(e) => setWithdrawUpi(e.target.value)}
-                  placeholder="e.g. mobile@upi or name@oksbi"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '10px',
-                    border: '1px solid #24292f',
-                    backgroundColor: '#08090a',
-                    color: '#ffffff',
-                    fontSize: '0.85rem',
-                    marginBottom: '1.25rem',
-                  }}
-                />
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '0.35rem' }}>
+                    UPI ID or Bank Account:
+                  </label>
+                  <input
+                    type="text"
+                    value={withdrawUpi}
+                    onChange={(e) => setWithdrawUpi(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      borderRadius: '12px',
+                      backgroundColor: '#131c2a',
+                      border: '1px solid #1e293b',
+                      color: '#ffffff',
+                      fontSize: '0.9rem',
+                    }}
+                  />
+                </div>
 
                 <button
                   onClick={handleExecuteWithdrawal}
                   className="btn-lime-primary"
-                  style={{ width: '100%', padding: '0.95rem', borderRadius: '12px' }}
+                  style={{ width: '100%', padding: '1rem', borderRadius: '14px', marginTop: '0.5rem' }}
                 >
                   CONFIRM TRANSFER
                 </button>
@@ -1504,108 +1636,6 @@ export const WorkerHome: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Floating Bottom Navigation Bar (Matching attached gaming stream mobile mockup) */}
-      <div style={{
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: '64px',
-        backgroundColor: '#08090a',
-        borderTop: '1px solid #1a1e22',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-around',
-        padding: '0 0.5rem',
-      }}>
-        <button
-          onClick={() => setActiveTab('HOME')}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '2px',
-            color: activeTab === 'HOME' ? '#a3e635' : '#8b949e',
-            fontSize: '0.65rem',
-            fontWeight: 800,
-          }}
-        >
-          <Activity size={18} />
-          <span>Overview</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('PAY')}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '2px',
-            color: activeTab === 'PAY' ? '#a3e635' : '#8b949e',
-            fontSize: '0.65rem',
-            fontWeight: 800,
-          }}
-        >
-          <TrendingUp size={18} />
-          <span>Earnings</span>
-        </button>
-
-        {/* Central Glowing Action Button */}
-        <button
-          onClick={() => {
-            if (isShiftActive) clockOut();
-            else handleOpenGeotagModal();
-          }}
-          style={{
-            width: '46px',
-            height: '46px',
-            borderRadius: '14px',
-            backgroundColor: '#a3e635',
-            color: '#08090a',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 0 20px rgba(163, 230, 53, 0.7)',
-            transform: 'translateY(-8px)',
-          }}
-          title={isShiftActive ? 'Clock Out' : 'Geotag Check In'}
-        >
-          <Zap size={24} fill="#08090a" />
-        </button>
-
-        <button
-          onClick={() => setActiveTab('INSURANCE')}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '2px',
-            color: activeTab === 'INSURANCE' ? '#a3e635' : '#8b949e',
-            fontSize: '0.65rem',
-            fontWeight: 800,
-          }}
-        >
-          <Shield size={18} />
-          <span>Policies</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('WALLET')}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '2px',
-            color: activeTab === 'WALLET' ? '#a3e635' : '#8b949e',
-            fontSize: '0.65rem',
-            fontWeight: 800,
-          }}
-        >
-          <Wallet size={18} />
-          <span>Wallet</span>
-        </button>
-      </div>
     </div>
   );
 };

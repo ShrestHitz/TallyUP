@@ -114,6 +114,7 @@ export interface HazardReport {
   slaBreached: boolean;
   rewardEarned: number; // ₹ earned when verified true
   rewardCredited: boolean;
+  supervisorNotes?: string;
 }
 
 export interface AnonymousFeedback {

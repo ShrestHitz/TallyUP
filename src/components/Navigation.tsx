@@ -2,8 +2,9 @@
 
 import React from 'react';
 import { useApp } from '@/context/AppContext';
-import { ShieldCheck, UserCheck, HardHat, GraduationCap, LayoutDashboard, Globe2, Sparkles } from 'lucide-react';
+import { ShieldCheck, UserCheck, HardHat, GraduationCap, LayoutDashboard, Globe2, Sparkles, AlertTriangle } from 'lucide-react';
 import { Language } from '@/types';
+import { LANGUAGE_OPTIONS } from '@/lib/i18n';
 
 export const Navigation: React.FC = () => {
   const {
@@ -19,11 +20,11 @@ export const Navigation: React.FC = () => {
 
   return (
     <header style={{
-      backgroundColor: 'rgba(8, 9, 10, 0.85)',
+      backgroundColor: 'rgba(9, 13, 18, 0.92)',
       backdropFilter: 'blur(20px)',
       WebkitBackdropFilter: 'blur(20px)',
-      borderBottom: '1px solid #24292f',
-      color: '#ffffff',
+      borderBottom: '1px solid #1e293b',
+      color: '#f8fafc',
       padding: '0.75rem 1.25rem',
       position: 'sticky',
       top: 0,
@@ -38,7 +39,7 @@ export const Navigation: React.FC = () => {
         flexWrap: 'wrap',
         gap: '0.75rem',
       }}>
-        {/* Brand & Punchline */}
+        {/* Brand & Editorial Business Punchline */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           <div
             onClick={() => setOnboardingStage('SPLASH')}
@@ -49,12 +50,12 @@ export const Navigation: React.FC = () => {
               width: '38px',
               height: '38px',
               borderRadius: '10px',
-              backgroundColor: '#a3e635',
+              backgroundColor: '#10b981',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#08090a',
-              boxShadow: '0 0 18px rgba(163, 230, 53, 0.45)',
+              color: '#090d12',
+              boxShadow: '0 0 18px rgba(16, 185, 129, 0.35)',
               fontWeight: 900,
               fontFamily: 'var(--font-mono)',
               fontSize: '1.15rem',
@@ -68,13 +69,13 @@ export const Navigation: React.FC = () => {
                 fontWeight: 900,
                 letterSpacing: '-0.03em',
                 lineHeight: 1.1,
-                color: '#ffffff',
+                color: '#f8fafc',
               }}>
-                Tally<span style={{ color: '#a3e635' }}>UP</span>
+                Tally<span style={{ color: '#34d399' }}>UP</span>
               </div>
               <div style={{
                 fontSize: '0.65rem',
-                color: '#a3e635',
+                color: '#34d399',
                 fontFamily: 'var(--font-mono)',
                 letterSpacing: '0.08em',
                 fontWeight: 700,
@@ -88,37 +89,42 @@ export const Navigation: React.FC = () => {
           {/* Tamper status indicator pill */}
           {isLedgerTampered && (
             <span style={{
-              backgroundColor: 'rgba(255, 71, 87, 0.15)',
-              border: '1px solid #ff4757',
-              color: '#ff4757',
+              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid #ef4444',
+              color: '#ef4444',
               fontSize: '0.7rem',
               fontWeight: 800,
               fontFamily: 'var(--font-mono)',
               padding: '0.2rem 0.65rem',
               borderRadius: '9999px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
             }}>
-              ⚠️ LEDGER TAMPER DETECTED
+              <AlertTriangle size={12} />
+              <span>LEDGER TAMPER DETECTED</span>
             </span>
           )}
         </div>
 
-        {/* Center Punchline Banner (Desktop) */}
+        {/* Center Punchline Banner (Desktop Editorial Italic) */}
         <div style={{
           display: 'none',
           alignItems: 'center',
           gap: '0.5rem',
-          backgroundColor: '#14171a',
-          padding: '0.35rem 0.85rem',
+          backgroundColor: '#0f172a',
+          padding: '0.4rem 1rem',
           borderRadius: '9999px',
-          border: '1px solid #24292f',
-          fontSize: '0.75rem',
-          fontFamily: 'var(--font-display)',
-          fontWeight: 700,
-          color: '#8b949e',
+          border: '1px solid #1e293b',
+          fontSize: '0.8rem',
         }} className="desktop-punch-pill">
-          <span style={{ color: '#a3e635', fontWeight: 800 }}>EVERY HOUR COUNTS.</span>
-          <span>•</span>
-          <span>PROVABLE ON-CHAIN WAGES</span>
+          <span className="punchline-italic" style={{ color: '#34d399', fontSize: '0.95rem' }}>
+            "Every hour counts."
+          </span>
+          <span style={{ color: '#64748b' }}>•</span>
+          <span style={{ fontFamily: 'var(--font-mono)', color: '#94a3b8', fontSize: '0.72rem', letterSpacing: '0.05em' }}>
+            PROVABLE STATUTORY WAGES
+          </span>
         </div>
 
         {/* Right side controls: Sector Selector, Language Picker, Role Switcher */}
@@ -126,10 +132,10 @@ export const Navigation: React.FC = () => {
           {/* Sector Switcher (Construction <-> Campus) */}
           <div style={{
             display: 'flex',
-            backgroundColor: '#14171a',
+            backgroundColor: '#0f172a',
             borderRadius: '9999px',
             padding: '3px',
-            border: '1px solid #24292f',
+            border: '1px solid #1e293b',
           }}>
             <button
               onClick={() => setSectorId('construction')}
@@ -142,8 +148,8 @@ export const Navigation: React.FC = () => {
                 fontSize: '0.78rem',
                 fontWeight: 800,
                 fontFamily: 'var(--font-display)',
-                backgroundColor: sectorId === 'construction' ? '#a3e635' : 'transparent',
-                color: sectorId === 'construction' ? '#08090a' : '#8b949e',
+                backgroundColor: sectorId === 'construction' ? '#10b981' : 'transparent',
+                color: sectorId === 'construction' ? '#090d12' : '#94a3b8',
               }}
             >
               <HardHat size={13} />
@@ -160,8 +166,8 @@ export const Navigation: React.FC = () => {
                 fontSize: '0.78rem',
                 fontWeight: 800,
                 fontFamily: 'var(--font-display)',
-                backgroundColor: sectorId === 'campus' ? '#00d2d3' : 'transparent',
-                color: sectorId === 'campus' ? '#08090a' : '#8b949e',
+                backgroundColor: sectorId === 'campus' ? '#06b6d4' : 'transparent',
+                color: sectorId === 'campus' ? '#090d12' : '#94a3b8',
               }}
             >
               <GraduationCap size={13} />
@@ -169,43 +175,51 @@ export const Navigation: React.FC = () => {
             </button>
           </div>
 
-          {/* Language Selector */}
+          {/* 7-Language Responsive Dropdown Selector */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            backgroundColor: '#14171a',
+            backgroundColor: '#0f172a',
             borderRadius: '9999px',
-            padding: '3px 0.5rem',
-            border: '1px solid #24292f',
-            gap: '0.2rem',
+            padding: '2px 0.65rem',
+            border: '1px solid #1e293b',
+            gap: '0.35rem',
           }}>
-            <Globe2 size={13} style={{ color: '#a3e635' }} />
-            {(['en', 'hi', 'ta'] as Language[]).map((lng) => (
-              <button
-                key={lng}
-                onClick={() => setLanguage(lng)}
-                style={{
-                  padding: '0.2rem 0.5rem',
-                  borderRadius: '9999px',
-                  fontSize: '0.75rem',
-                  fontWeight: language === lng ? 800 : 500,
-                  fontFamily: 'var(--font-mono)',
-                  backgroundColor: language === lng ? '#a3e635' : 'transparent',
-                  color: language === lng ? '#08090a' : '#8b949e',
-                }}
-              >
-                {lng === 'en' ? 'EN' : lng === 'hi' ? 'हिंदी' : 'தமிழ்'}
-              </button>
-            ))}
+            <Globe2 size={13} style={{ color: '#34d399' }} />
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as Language)}
+              style={{
+                backgroundColor: 'transparent',
+                color: '#f8fafc',
+                border: 'none',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                fontFamily: 'var(--font-display)',
+                outline: 'none',
+                cursor: 'pointer',
+                padding: '0.2rem 0',
+              }}
+            >
+              {LANGUAGE_OPTIONS.map((opt) => (
+                <option
+                  key={opt.code}
+                  value={opt.code}
+                  style={{ backgroundColor: '#0f172a', color: '#f8fafc' }}
+                >
+                  {opt.nativeName} ({opt.label})
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* View Mode Toggle: Worker PWA vs Admin Hub */}
           <div style={{
             display: 'flex',
-            backgroundColor: '#14171a',
+            backgroundColor: '#0f172a',
             borderRadius: '9999px',
             padding: '3px',
-            border: '1px solid #24292f',
+            border: '1px solid #1e293b',
           }}>
             <button
               onClick={() => setViewMode('WORKER')}
@@ -218,8 +232,8 @@ export const Navigation: React.FC = () => {
                 fontSize: '0.78rem',
                 fontWeight: 800,
                 fontFamily: 'var(--font-display)',
-                backgroundColor: viewMode === 'WORKER' ? '#a3e635' : 'transparent',
-                color: viewMode === 'WORKER' ? '#08090a' : '#8b949e',
+                backgroundColor: viewMode === 'WORKER' ? '#10b981' : 'transparent',
+                color: viewMode === 'WORKER' ? '#090d12' : '#94a3b8',
               }}
             >
               <UserCheck size={14} />
@@ -236,8 +250,8 @@ export const Navigation: React.FC = () => {
                 fontSize: '0.78rem',
                 fontWeight: 800,
                 fontFamily: 'var(--font-display)',
-                backgroundColor: viewMode === 'ADMIN' ? '#a3e635' : 'transparent',
-                color: viewMode === 'ADMIN' ? '#08090a' : '#8b949e',
+                backgroundColor: viewMode === 'ADMIN' ? '#10b981' : 'transparent',
+                color: viewMode === 'ADMIN' ? '#090d12' : '#94a3b8',
               }}
             >
               <LayoutDashboard size={14} />
@@ -252,9 +266,9 @@ export const Navigation: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '0.35rem',
-              backgroundColor: 'rgba(163, 230, 53, 0.12)',
-              border: '1px solid #a3e635',
-              color: '#a3e635',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              border: '1px solid rgba(16, 185, 129, 0.4)',
+              color: '#34d399',
               padding: '0.35rem 0.75rem',
               borderRadius: '9999px',
               fontSize: '0.75rem',

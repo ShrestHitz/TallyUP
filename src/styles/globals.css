@@ -1,7 +1,7 @@
 @import './design-tokens.css';
 
-/* Google Fonts Import: Chivo, Archivo, Chivo Mono, Space Grotesk (Metacarbon & Fensory Stack) */
-@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Chivo+Mono:wght@400;500;600;700&family=Chivo:wght@400;600;700;800;900&family=Space+Grotesk:wght@500;600;700;800&display=swap');
+/* Google Fonts Import: Newsreader (Editorial Serif Italic), Plus Jakarta Sans, JetBrains Mono */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@1,6..72,400;1,6..72,500;1,6..72,600;1,6..72,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -22,7 +22,7 @@ html, body {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
-  letter-spacing: -0.03em;
+  letter-spacing: -0.025em;
   font-weight: 800;
   color: var(--tly-text-heading);
 }
@@ -42,7 +42,26 @@ a {
 }
 
 /* =====================================================================
-   SOPHISTICATED CARBON & LIME UI PRIMITIVES
+   EDITORIAL BUSINESS TYPOGRAPHY & PUNCHLINES
+   ===================================================================== */
+
+.punchline-italic {
+  font-family: var(--font-serif-italic);
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+}
+
+.editorial-tagline {
+  font-family: var(--font-serif-italic);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.15rem;
+  color: var(--tly-lime-bright);
+}
+
+/* =====================================================================
+   SOPHISTICATED CARBON & EMERALD UI PRIMITIVES
    ===================================================================== */
 
 .impeccable-shell {
@@ -50,7 +69,7 @@ a {
   display: flex;
   flex-direction: column;
   background-color: var(--tly-carbon-base);
-  background-image: radial-gradient(circle at 50% 0%, rgba(163, 230, 53, 0.08) 0%, transparent 60%);
+  background-image: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.05) 0%, transparent 60%);
 }
 
 /* Carbon Card */
@@ -67,26 +86,25 @@ a {
 
 .carbon-card:hover {
   border-color: var(--tly-lime-border);
-  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.9), 0 0 20px rgba(163, 230, 53, 0.15);
+  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.8), 0 0 15px rgba(16, 185, 129, 0.1);
 }
 
-/* Neon Lime Primary CTA Button (matches image) */
+/* Sophisticated Primary Emerald Button */
 .btn-lime-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.65rem;
-  padding: 1rem 1.75rem;
+  padding: 0.95rem 1.65rem;
   border-radius: var(--radius-md);
-  background: var(--tly-lime-bright);
-  color: #08090a;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  box-shadow: 0 4px 20px rgba(204, 255, 0, 0.35);
-  border: none;
+  letter-spacing: 0.02em;
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   position: relative;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
@@ -94,26 +112,22 @@ a {
 
 .btn-lime-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(204, 255, 0, 0.5);
-  filter: brightness(1.05);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.45);
+  filter: brightness(1.08);
 }
 
-.btn-lime-primary:active {
-  transform: scale(0.98);
-}
-
-/* Carbon Stealth Button */
+/* Stealth Secondary Button */
 .btn-carbon-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.85rem 1.5rem;
+  padding: 0.95rem 1.5rem;
   border-radius: var(--radius-md);
-  background: var(--tly-carbon-elevated);
+  background: var(--tly-carbon-card);
   color: var(--tly-text-pure);
   font-family: var(--font-display);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 700;
   border: 1px solid var(--tly-carbon-border);
   cursor: pointer;
@@ -121,42 +135,35 @@ a {
 }
 
 .btn-carbon-secondary:hover {
-  border-color: var(--tly-lime-primary);
-  background: #20262b;
+  background: var(--tly-carbon-elevated);
+  border-color: var(--tly-lime-border);
+  color: var(--tly-lime-bright);
 }
 
-/* Tactile Mobile Card for Worker */
+/* Tactile Tile for Frontline Workers */
 .tactile-carbon-tile {
+  background: var(--tly-carbon-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--tly-carbon-border);
+  padding: 1.15rem;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: space-between;
-  padding: 1.25rem 1rem;
-  min-height: 120px;
-  border-radius: var(--radius-lg);
-  background: var(--tly-carbon-elevated);
-  border: 1px solid var(--tly-carbon-border);
-  color: var(--tly-text-pure);
-  box-shadow: var(--shadow-card-elevated);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   text-align: left;
   cursor: pointer;
+  transition: all 0.18s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-card-elevated);
 }
 
 .tactile-carbon-tile:hover {
-  border-color: var(--tly-lime-primary);
+  border-color: var(--tly-lime-border);
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.8), 0 0 15px rgba(163, 230, 53, 0.2);
 }
 
 .tactile-carbon-tile:active {
-  transform: scale(0.97);
-}
-
-.tactile-carbon-tile.active-lime {
-  background: linear-gradient(135deg, rgba(163, 230, 53, 0.15) 0%, var(--tly-carbon-elevated) 100%);
-  border-color: var(--tly-lime-primary);
-  box-shadow: 0 0 25px rgba(163, 230, 53, 0.25);
+  transform: scale(0.98);
 }
 
 /* Badges */
@@ -166,14 +173,14 @@ a {
   gap: 0.35rem;
   padding: 0.25rem 0.65rem;
   border-radius: var(--radius-pill);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 800;
   font-family: var(--font-display);
   background: var(--tly-lime-subtle);
-  color: var(--tly-lime-primary);
+  color: var(--tly-lime-bright);
   border: 1px solid var(--tly-lime-border);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
 }
 
 .badge-danger {
@@ -182,43 +189,13 @@ a {
   gap: 0.35rem;
   padding: 0.25rem 0.65rem;
   border-radius: var(--radius-pill);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 800;
   background: var(--tly-danger-bg);
   color: var(--tly-danger-coral);
-  border: 1px solid rgba(255, 71, 87, 0.3);
+  border: 1px solid rgba(239, 68, 68, 0.3);
   text-transform: uppercase;
 }
-
-/* Glowing Pulse Animation */
-@keyframes limePulseGlow {
-  0% { box-shadow: 0 0 0 0 rgba(163, 230, 53, 0.7); }
-  70% { box-shadow: 0 0 0 14px rgba(163, 230, 53, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(163, 230, 53, 0); }
-}
-
-.pulse-lime {
-  animation: limePulseGlow 1.8s infinite;
-}
-
-/* Audio Wave Animation */
-@keyframes audioPulse {
-  0%, 100% { height: 6px; }
-  50% { height: 26px; }
-}
-
-.audio-bar-lime {
-  display: inline-block;
-  width: 4px;
-  background: var(--tly-lime-bright);
-  border-radius: 4px;
-  animation: audioPulse 0.9s ease-in-out infinite;
-}
-
-.audio-bar-lime:nth-child(2) { animation-delay: 0.15s; }
-.audio-bar-lime:nth-child(3) { animation-delay: 0.3s; }
-.audio-bar-lime:nth-child(4) { animation-delay: 0.45s; }
-.audio-bar-lime:nth-child(5) { animation-delay: 0.6s; }
 
 /* Custom Sleek Scrollbar */
 ::-webkit-scrollbar {
@@ -226,10 +203,10 @@ a {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #08090a;
+  background: #090d12;
 }
 ::-webkit-scrollbar-thumb {
-  background: #24292f;
+  background: #1e293b;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {

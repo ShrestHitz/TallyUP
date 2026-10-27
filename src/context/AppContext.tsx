@@ -64,8 +64,8 @@ interface AppContextType {
 
   // Hazards & Rewards
   hazards: HazardReport[];
-  addHazard: (report: Omit<HazardReport, 'id' | 'reportedAt' | 'clusterCount' | 'status' | 'slaMinutesRemaining' | 'slaBreached' | 'rewardEarned' | 'rewardCredited'>) => void;
-  updateHazardStatus: (id: string, status: HazardReport['status']) => void;
+  addHazard: (report: Omit<HazardReport, 'id' | 'reportedAt' | 'clusterCount' | 'status' | 'slaMinutesRemaining' | 'slaBreached' | 'rewardEarned' | 'rewardCredited'> & { id?: string }) => string;
+  updateHazardStatus: (id: string, status: HazardReport['status'], notes?: string) => void;
   verifyAndRewardHazard: (hazardId: string) => void;
 
   // Feedback
@@ -292,13 +292,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     report: Omit<
       HazardReport,
       'id' | 'reportedAt' | 'clusterCount' | 'status' | 'slaMinutesRemaining' | 'slaBreached' | 'rewardEarned' | 'rewardCredited'
-    >
-  ) => {
+    > & { id?: string }
+  ): string => {
+    const generatedId = report.id || `hz-${Date.now().toString().slice(-4)}`;
     const newHazard: HazardReport = {
       ...report,
+      id: generatedId,
       classification: report.classification || 'NEAR_MISS',
       hazardIcon: report.hazardIcon || 'AlertTriangle',
-      id: `hz-${Date.now().toString().slice(-4)}`,
       reportedAt: 'Just now',
       clusterCount: 1,
       status: 'SUBMITTED',
@@ -308,11 +309,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       rewardCredited: false,
     };
     setHazards((prev) => [newHazard, ...prev]);
+    return generatedId;
   };
 
-  const updateHazardStatus = (id: string, status: HazardReport['status']) => {
+  const updateHazardStatus = (id: string, status: HazardReport['status'], notes?: string) => {
     setHazards((prev) =>
-      prev.map((h) => (h.id === id ? { ...h, status } : h))
+      prev.map((h) => (h.id === id ? { ...h, status, ...(notes ? { supervisorNotes: notes } : {}) } : h))
     );
   };
 

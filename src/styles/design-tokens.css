@@ -1,52 +1,54 @@
 :root {
   /* =====================================================================
-     TALLYUP CARBON & ELECTRIC LIME DESIGN SYSTEM
-     Referencing: Metacarbon × Fensory × High-Energy Carbon Dark UI
+     TALLYUP SOPHISTICATED EXECUTIVE PALETTE
+     Deep Stealth Carbon × Refined Emerald & Slate × Editorial Serif Italics
      ===================================================================== */
   
-  /* Electric Neon Lime & Acid Green (Signature Punch Palette) */
-  --tly-lime-primary: #a3e635;
-  --tly-lime-bright: #ccff00;
-  --tly-lime-glow: rgba(204, 255, 0, 0.35);
-  --tly-lime-subtle: rgba(163, 230, 53, 0.12);
-  --tly-lime-border: rgba(163, 230, 53, 0.3);
-  --tly-lime-dark: #65a30d;
+  /* Refined Sophisticated Emerald / Sage (Understated, Executive, Non-Garish) */
+  --tly-lime-primary: #10b981;
+  --tly-lime-bright: #34d399;
+  --tly-lime-glow: rgba(16, 185, 129, 0.22);
+  --tly-lime-subtle: rgba(16, 185, 129, 0.1);
+  --tly-lime-border: rgba(16, 185, 129, 0.28);
+  --tly-lime-dark: #047857;
 
-  /* Carbon Obsidian & Deep Stealth Surfaces (Metacarbon Base) */
-  --tly-carbon-base: #08090a;
-  --tly-carbon-surface: #0e1113;
-  --tly-carbon-card: #14171a;
-  --tly-carbon-elevated: #1a1e22;
-  --tly-carbon-border: #24292f;
-  --tly-carbon-border-subtle: rgba(255, 255, 255, 0.08);
+  /* Deep Executive Stealth Carbon */
+  --tly-carbon-base: #090d12;
+  --tly-carbon-surface: #0e1520;
+  --tly-carbon-card: #131c2a;
+  --tly-carbon-elevated: #1a2536;
+  --tly-carbon-border: #1e293b;
+  --tly-carbon-border-subtle: rgba(255, 255, 255, 0.07);
 
-  /* High-Contrast Typography Palette */
+  /* Typography Colors */
   --tly-text-pure: #ffffff;
-  --tly-text-heading: #f4fbe8;
-  --tly-text-muted: #8b949e;
-  --tly-text-faint: #57606a;
+  --tly-text-heading: #f8fafc;
+  --tly-text-muted: #94a3b8;
+  --tly-text-faint: #64748b;
 
-  /* High-Alert Status Accents */
-  --tly-danger-coral: #ff4757;
-  --tly-danger-bg: rgba(255, 71, 87, 0.15);
-  --tly-warning-amber: #ffa502;
-  --tly-warning-bg: rgba(255, 165, 2, 0.15);
-  --tly-cyan-telemetry: #00d2d3;
-  --tly-cyan-bg: rgba(0, 210, 211, 0.12);
+  /* Status Accents */
+  --tly-danger-coral: #ef4444;
+  --tly-danger-bg: rgba(239, 68, 68, 0.12);
+  --tly-warning-amber: #f59e0b;
+  --tly-warning-bg: rgba(245, 158, 11, 0.12);
+  --tly-cyan-telemetry: #06b6d4;
+  --tly-cyan-bg: rgba(6, 182, 212, 0.12);
 
-  /* High-Impact Typography (Metacarbon & Fensory Stack) */
-  --font-display: 'Chivo', 'Space Grotesk', -apple-system, sans-serif;
-  --font-body: 'Archivo', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'Chivo Mono', 'JetBrains Mono', Menlo, monospace;
+  /* Typography Stacks */
+  --font-display: 'Plus Jakarta Sans', 'Chivo', -apple-system, sans-serif;
+  --font-serif-italic: 'Newsreader', 'Playfair Display', Georgia, serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Chivo Mono', Menlo, monospace;
 
-  /* Geometry & Shadows */
+  /* Radii */
   --radius-sm: 8px;
   --radius-md: 14px;
-  --radius-lg: 22px;
-  --radius-xl: 32px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
   --radius-pill: 9999px;
 
-  --shadow-carbon: 0 10px 30px rgba(0, 0, 0, 0.7);
-  --shadow-lime-glow: 0 0 25px rgba(204, 255, 0, 0.35);
-  --shadow-card-elevated: 0 14px 40px -10px rgba(0, 0, 0, 0.8), 0 0 1px 1px rgba(255, 255, 255, 0.06);
+  /* Shadows */
+  --shadow-carbon: 0 10px 30px rgba(0, 0, 0, 0.6);
+  --shadow-lime-glow: 0 0 20px rgba(16, 185, 129, 0.2);
+  --shadow-card-elevated: 0 12px 35px -8px rgba(0, 0, 0, 0.7), 0 0 1px 1px rgba(255, 255, 255, 0.05);
 }
