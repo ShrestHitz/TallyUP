@@ -1,0 +1,61 @@
+:root {
+  /* =====================================================================
+     KOCHI METRO (KMRL) BRAND PALETTE × IMPECCABLE DESIGN SYSTEM
+     ===================================================================== */
+  
+  /* Primary Kochi Metro Teal & Cyan Accents */
+  --km-teal-primary: #009999;
+  --km-teal-hover: #007f7f;
+  --km-teal-dark: #005d5d;
+  --km-teal-light: #e0f7f6;
+  --km-teal-glow: rgba(0, 153, 153, 0.25);
+  
+  --km-cyan-luminescent: #2dd4bf;
+  --km-cyan-bright: #00e5ff;
+  --km-cyan-subtle: #ccfbf1;
+  --km-cyan-border: #99f6e4;
+
+  /* Deep Oceanic Transit Navy & Slate (Impeccable Base) */
+  --km-navy-deep: #0a1118;
+  --km-navy-card: #0f172a;
+  --km-navy-surface: #1e293b;
+  --km-navy-border: #334155;
+  --km-navy-muted: #64748b;
+  --km-navy-text: #94a3b8;
+  --km-navy-light: #f8fafc;
+
+  /* Safety Hazard & Alert Accents */
+  --km-hazard-amber: #f59e0b;
+  --km-hazard-amber-bg: rgba(245, 158, 11, 0.12);
+  --km-danger-red: #ef4444;
+  --km-danger-bg: rgba(239, 68, 68, 0.12);
+  --km-success-green: #10b981;
+  --km-success-bg: rgba(16, 185, 129, 0.12);
+
+  /* Light Theme Canvas Tokens */
+  --km-canvas-bg: #f8fafc;
+  --km-card-bg-light: #ffffff;
+  --km-text-main: #0f172a;
+  --km-text-secondary: #475569;
+  --km-border-light: #e2e8f0;
+
+  /* Typography */
+  --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', Menlo, monospace;
+
+  /* Impeccable Geometry & Shadows */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 9999px;
+
+  --shadow-subtle: 0 4px 12px rgba(10, 17, 24, 0.05);
+  --shadow-card: 0 10px 25px -5px rgba(10, 17, 24, 0.08), 0 8px 10px -6px rgba(10, 17, 24, 0.04);
+  --shadow-hover: 0 20px 30px -10px rgba(0, 153, 153, 0.2);
+  --shadow-glow: 0 0 25px rgba(0, 153, 153, 0.35);
+
+  /* Touch accessibility */
+  --min-touch-target: 48px;
+}

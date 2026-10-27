@@ -1,0 +1,17 @@
+{
+  "name": "TallyUP — Decent Work Platform",
+  "short_name": "TallyUP",
+  "description": "Pocket Witness tamper-evident attendance, voice payslip audit, and safety reporting",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#009999",
+  "theme_color": "#009999",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
