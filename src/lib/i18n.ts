@@ -277,3 +277,13 @@ export const TRANSLATIONS: Record<Language, any> = {
     rewardNotice: 'ದೃಢೀಕರಿಸಲ್ಪಟ್ಟ ಅಪಾಯಗಳಿಗೆ ನಗದು ಬಹುಮಾನ ಸಿಗುತ್ತದೆ.',
   },
 };
+
+// Guarantee 100% key completeness across all 7 languages via fallback
+for (const lang of Object.keys(TRANSLATIONS) as Language[]) {
+  if (lang !== 'en') {
+    TRANSLATIONS[lang] = {
+      ...TRANSLATIONS.en,
+      ...TRANSLATIONS[lang],
+    };
+  }
+}

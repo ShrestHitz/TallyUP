@@ -128,12 +128,12 @@ export const AdminDashboard: React.FC = () => {
     }}>
       {/* Top Punchline & Facility Command Banner */}
       <div style={{
-        backgroundColor: '#0f172a',
+        backgroundColor: '#0e1113',
         borderRadius: '24px',
         padding: '1.5rem 1.75rem',
-        color: '#f8fafc',
-        border: '1px solid #1e293b',
-        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6)',
+        color: '#ffffff',
+        border: '1px solid #24292f',
+        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.7)',
         marginBottom: '1.5rem',
         display: 'flex',
         alignItems: 'center',
@@ -149,7 +149,7 @@ export const AdminDashboard: React.FC = () => {
           right: '20%',
           width: '280px',
           height: '160px',
-          background: 'radial-gradient(ellipse, rgba(16, 185, 129, 0.12), transparent 70%)',
+          background: 'radial-gradient(ellipse, rgba(163, 230, 53, 0.12), transparent 70%)',
           pointerEvents: 'none',
         }} />
 
@@ -158,7 +158,7 @@ export const AdminDashboard: React.FC = () => {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.45rem',
-            color: '#34d399',
+            color: '#a3e635',
             fontSize: '0.75rem',
             fontFamily: 'var(--font-mono)',
             fontWeight: 800,
@@ -167,17 +167,17 @@ export const AdminDashboard: React.FC = () => {
             marginBottom: '0.35rem',
           }}>
             <Zap size={13} />
-            <span className="punchline-italic" style={{ fontSize: '0.95rem', fontStyle: 'italic', textTransform: 'none' }}>
-              "Every hour counts."
+            <span style={{ color: '#ffffff', fontWeight: 900, fontFamily: 'var(--font-display)', fontSize: '0.82rem' }}>
+              EVERY HOUR COUNTS.
             </span>
-            <span style={{ color: '#64748b' }}>•</span>
+            <span style={{ color: '#57606a' }}>•</span>
             <span>COUNT IT. PROVE IT. GET PAID.</span>
           </div>
 
-          <h1 style={{ fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.03em', color: '#f8fafc' }}>
+          <h1 style={{ fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.03em', color: '#ffffff' }}>
             {sector.name}
           </h1>
-          <p style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '0.2rem' }}>
+          <p style={{ fontSize: '0.85rem', color: '#8b949e', marginTop: '0.2rem' }}>
             {sector.tagline} • Managing {sector.workerType}
           </p>
         </div>
@@ -189,13 +189,13 @@ export const AdminDashboard: React.FC = () => {
             style={{
               padding: '0.65rem 1.1rem',
               borderRadius: '12px',
-              backgroundColor: sectorId === 'construction' ? '#10b981' : '#131c2a',
-              color: sectorId === 'construction' ? '#090d12' : '#f8fafc',
+              backgroundColor: sectorId === 'construction' ? '#a3e635' : '#14171a',
+              color: sectorId === 'construction' ? '#08090a' : '#ffffff',
               fontWeight: 800,
               fontFamily: 'var(--font-display)',
               fontSize: '0.85rem',
-              border: '1px solid #1e293b',
-              boxShadow: sectorId === 'construction' ? '0 0 15px rgba(16, 185, 129, 0.35)' : 'none',
+              border: '1px solid #24292f',
+              boxShadow: sectorId === 'construction' ? '0 0 15px rgba(163, 230, 53, 0.4)' : 'none',
             }}
           >
             Metro Construction
@@ -205,13 +205,13 @@ export const AdminDashboard: React.FC = () => {
             style={{
               padding: '0.65rem 1.1rem',
               borderRadius: '12px',
-              backgroundColor: sectorId === 'campus' ? '#06b6d4' : '#131c2a',
-              color: sectorId === 'campus' ? '#090d12' : '#f8fafc',
+              backgroundColor: sectorId === 'campus' ? '#00d2d3' : '#14171a',
+              color: sectorId === 'campus' ? '#08090a' : '#ffffff',
               fontWeight: 800,
               fontFamily: 'var(--font-display)',
               fontSize: '0.85rem',
-              border: '1px solid #1e293b',
-              boxShadow: sectorId === 'campus' ? '0 0 15px rgba(6, 182, 212, 0.35)' : 'none',
+              border: '1px solid #24292f',
+              boxShadow: sectorId === 'campus' ? '0 0 15px rgba(0, 210, 211, 0.4)' : 'none',
             }}
           >
             Campus Operations
@@ -227,26 +227,26 @@ export const AdminDashboard: React.FC = () => {
         marginBottom: '1.5rem',
       }}>
         {/* Metric 1 */}
-        <div className="carbon-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', backgroundColor: '#0f172a', border: '1px solid #1e293b' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#34d399', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="carbon-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', backgroundColor: '#0e1113', border: '1px solid #24292f' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'rgba(163, 230, 53, 0.15)', color: '#a3e635', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Users size={24} />
           </div>
           <div>
-            <div style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Active Headcount</div>
-            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#f8fafc' }}>28 / 32</div>
-            <div style={{ fontSize: '0.7rem', color: '#34d399', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>87.5% GEOTAGGED PRESENT</div>
+            <div style={{ fontSize: '0.72rem', color: '#8b949e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Active Headcount</div>
+            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#ffffff' }}>28 / 32</div>
+            <div style={{ fontSize: '0.7rem', color: '#a3e635', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>87.5% GEOTAGGED PRESENT</div>
           </div>
         </div>
 
         {/* Metric 2 */}
-        <div className="carbon-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', backgroundColor: '#0f172a', border: '1px solid #1e293b' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="carbon-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', backgroundColor: '#0e1113', border: '1px solid #24292f' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'rgba(255, 165, 2, 0.15)', color: '#ffa502', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Clock size={24} />
           </div>
           <div>
-            <div style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Cumulative Overtime</div>
-            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#f8fafc' }}>142.5 hrs</div>
-            <div style={{ fontSize: '0.7rem', color: '#f59e0b', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>2.0x MULTIPLIER AUDIT</div>
+            <div style={{ fontSize: '0.72rem', color: '#8b949e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Cumulative Overtime</div>
+            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#ffffff' }}>142.5 hrs</div>
+            <div style={{ fontSize: '0.7rem', color: '#ffa502', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>2.0x MULTIPLIER AUDIT</div>
           </div>
         </div>
 
@@ -255,31 +255,31 @@ export const AdminDashboard: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           gap: '1rem',
-          backgroundColor: '#0f172a',
-          border: '1px solid #1e293b',
-          borderColor: criticalHazardsCount > 0 ? '#ef4444' : '#1e293b',
+          backgroundColor: '#0e1113',
+          border: '1px solid #24292f',
+          borderColor: criticalHazardsCount > 0 ? '#ff4757' : '#24292f',
         }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'rgba(255, 71, 87, 0.15)', color: '#ff4757', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <AlertTriangle size={24} />
           </div>
           <div>
-            <div style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>P1 Hazards Pending</div>
-            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#ef4444' }}>{criticalHazardsCount} Active</div>
-            <div style={{ fontSize: '0.7rem', color: '#34d399', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>+₹250 WORKER REWARD</div>
+            <div style={{ fontSize: '0.72rem', color: '#8b949e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>P1 Hazards Pending</div>
+            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: '#ff4757' }}>{criticalHazardsCount} Active</div>
+            <div style={{ fontSize: '0.7rem', color: '#a3e635', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>+₹250 WORKER REWARD</div>
           </div>
         </div>
 
         {/* Metric 4 */}
-        <div className="carbon-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', backgroundColor: '#0f172a', border: '1px solid #1e293b' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: isLedgerTampered ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)', color: isLedgerTampered ? '#ef4444' : '#34d399', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="carbon-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', backgroundColor: '#0e1113', border: '1px solid #24292f' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: isLedgerTampered ? 'rgba(255, 71, 87, 0.15)' : 'rgba(163, 230, 53, 0.15)', color: isLedgerTampered ? '#ff4757' : '#a3e635', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <ShieldCheck size={24} />
           </div>
           <div>
-            <div style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>SHA-256 Ledger State</div>
-            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: isLedgerTampered ? '#ef4444' : '#34d399' }}>
+            <div style={{ fontSize: '0.72rem', color: '#8b949e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>SHA-256 Ledger State</div>
+            <div style={{ fontSize: '1.65rem', fontWeight: 900, color: isLedgerTampered ? '#ff4757' : '#a3e635' }}>
               {isLedgerTampered ? 'TAMPERED' : '100% INTACT'}
             </div>
-            <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>POCKET WITNESS CHAIN</div>
+            <div style={{ fontSize: '0.7rem', color: '#8b949e', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>POCKET WITNESS CHAIN</div>
           </div>
         </div>
       </div>
@@ -288,7 +288,7 @@ export const AdminDashboard: React.FC = () => {
       <div style={{
         display: 'flex',
         gap: '0.5rem',
-        borderBottom: '1px solid #1e293b',
+        borderBottom: '1px solid #24292f',
         marginBottom: '1.5rem',
         overflowX: 'auto',
       }}>
@@ -310,8 +310,8 @@ export const AdminDashboard: React.FC = () => {
               fontSize: '0.85rem',
               fontWeight: 800,
               fontFamily: 'var(--font-display)',
-              color: activeAdminTab === tab.id ? '#34d399' : '#94a3b8',
-              borderBottom: activeAdminTab === tab.id ? '2px solid #10b981' : '2px solid transparent',
+              color: activeAdminTab === tab.id ? '#a3e635' : '#8b949e',
+              borderBottom: activeAdminTab === tab.id ? '2px solid #a3e635' : '2px solid transparent',
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
@@ -322,8 +322,8 @@ export const AdminDashboard: React.FC = () => {
             {tab.badge && (
               <span style={{
                 fontSize: '0.68rem',
-                backgroundColor: tab.badge === 'Tampered' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
-                color: tab.badge === 'Tampered' ? '#ef4444' : '#34d399',
+                backgroundColor: tab.badge === 'Tampered' ? 'rgba(255, 71, 87, 0.2)' : 'rgba(163, 230, 53, 0.2)',
+                color: tab.badge === 'Tampered' ? '#ff4757' : '#a3e635',
                 padding: '0.1rem 0.5rem',
                 borderRadius: '9999px',
                 fontWeight: 800,
@@ -335,8 +335,8 @@ export const AdminDashboard: React.FC = () => {
             {tab.count !== undefined && (
               <span style={{
                 fontSize: '0.68rem',
-                backgroundColor: '#1e293b',
-                color: '#94a3b8',
+                backgroundColor: '#14171a',
+                color: '#8b949e',
                 padding: '0.1rem 0.5rem',
                 borderRadius: '9999px',
                 fontWeight: 800,
@@ -662,8 +662,8 @@ export const AdminDashboard: React.FC = () => {
           }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                <span className="punchline-italic" style={{ color: '#34d399', fontSize: '1.15rem' }}>
-                  "Observe. Report. Prevent."
+                <span style={{ color: '#a3e635', fontSize: '0.95rem', fontFamily: 'var(--font-mono)', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                  OBSERVE • REPORT • PREVENT
                 </span>
                 <span style={{ color: '#64748b' }}>•</span>
                 <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
@@ -694,7 +694,7 @@ export const AdminDashboard: React.FC = () => {
                   borderRadius: '9999px',
                   fontSize: '0.75rem',
                   fontWeight: 800,
-                  backgroundColor: hazardScope === 'ALL' ? '#10b981' : 'transparent',
+                  backgroundColor: hazardScope === 'ALL' ? '#a3e635' : 'transparent',
                   color: hazardScope === 'ALL' ? '#090d12' : '#94a3b8',
                 }}
               >
@@ -707,7 +707,7 @@ export const AdminDashboard: React.FC = () => {
                   borderRadius: '9999px',
                   fontSize: '0.75rem',
                   fontWeight: 800,
-                  backgroundColor: hazardScope === 'SECTOR' ? '#10b981' : 'transparent',
+                  backgroundColor: hazardScope === 'SECTOR' ? '#a3e635' : 'transparent',
                   color: hazardScope === 'SECTOR' ? '#090d12' : '#94a3b8',
                 }}
               >
@@ -720,7 +720,7 @@ export const AdminDashboard: React.FC = () => {
                   borderRadius: '9999px',
                   fontSize: '0.75rem',
                   fontWeight: 800,
-                  backgroundColor: hazardScope === 'PENDING' ? '#10b981' : 'transparent',
+                  backgroundColor: hazardScope === 'PENDING' ? '#a3e635' : 'transparent',
                   color: hazardScope === 'PENDING' ? '#090d12' : '#94a3b8',
                 }}
               >
@@ -732,11 +732,11 @@ export const AdminDashboard: React.FC = () => {
           {/* Supervisor Action Toast Message */}
           {hazardActionMsg && (
             <div style={{
-              backgroundColor: 'rgba(16, 185, 129, 0.12)',
-              border: '1px solid #10b981',
+              backgroundColor: 'rgba(163, 230, 53, 0.12)',
+              border: '1px solid #a3e635',
               borderRadius: '14px',
               padding: '0.85rem 1.25rem',
-              color: '#34d399',
+              color: '#a3e635',
               fontSize: '0.82rem',
               fontWeight: 700,
               fontFamily: 'var(--font-mono)',
@@ -759,7 +759,7 @@ export const AdminDashboard: React.FC = () => {
                   key={h.id}
                   style={{
                     backgroundColor: '#0f172a',
-                    border: isResolved ? '1px solid #10b981' : h.severity === 'P1_CRITICAL' ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid #1e293b',
+                    border: isResolved ? '1px solid #a3e635' : h.severity === 'P1_CRITICAL' ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid #1e293b',
                     borderLeft: h.severity === 'P1_CRITICAL' ? '4px solid #ef4444' : '4px solid #f59e0b',
                     borderRadius: '20px',
                     padding: '1.25rem',
@@ -847,7 +847,7 @@ export const AdminDashboard: React.FC = () => {
                           backgroundColor: 'rgba(9, 13, 18, 0.85)',
                           padding: '0.3rem 0.65rem',
                           fontSize: '0.65rem',
-                          color: '#34d399',
+                          color: '#a3e635',
                           fontFamily: 'var(--font-mono)',
                           display: 'flex',
                           alignItems: 'center',
@@ -870,7 +870,7 @@ export const AdminDashboard: React.FC = () => {
                       marginBottom: '0.85rem',
                       lineHeight: 1.45,
                     }}>
-                      <div style={{ fontSize: '0.68rem', color: '#34d399', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.25rem', fontFamily: 'var(--font-mono)' }}>
+                      <div style={{ fontSize: '0.68rem', color: '#a3e635', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.25rem', fontFamily: 'var(--font-mono)' }}>
                         Worker Audio Note & AI Triage Summary:
                       </div>
                       <p style={{ fontStyle: 'italic', color: '#cbd5e1', marginBottom: '0.45rem' }}>
@@ -884,12 +884,12 @@ export const AdminDashboard: React.FC = () => {
                     {/* Supervisor Notes (if added) */}
                     {h.supervisorNotes && (
                       <div style={{
-                        backgroundColor: 'rgba(16, 185, 129, 0.08)',
-                        border: '1px solid rgba(16, 185, 129, 0.25)',
+                        backgroundColor: 'rgba(163, 230, 53, 0.08)',
+                        border: '1px solid rgba(163, 230, 53, 0.25)',
                         borderRadius: '10px',
                         padding: '0.55rem 0.75rem',
                         fontSize: '0.75rem',
-                        color: '#34d399',
+                        color: '#a3e635',
                         marginBottom: '0.85rem',
                       }}>
                         <strong>Supervisor Log:</strong> {h.supervisorNotes}
@@ -907,7 +907,7 @@ export const AdminDashboard: React.FC = () => {
                         fontSize: '0.72rem',
                         fontWeight: 800,
                         fontFamily: 'var(--font-mono)',
-                        color: isResolved ? '#10b981' : isInProgress ? '#06b6d4' : isAcknowledged ? '#f59e0b' : '#f97316',
+                        color: isResolved ? '#a3e635' : isInProgress ? '#06b6d4' : isAcknowledged ? '#f59e0b' : '#f97316',
                       }}>
                         {isResolved
                           ? '● RESOLVED & ₹250 CREDITED'
@@ -998,8 +998,8 @@ export const AdminDashboard: React.FC = () => {
                             onClick={() => handleSupervisorAction(h.id, 'RESOLVE')}
                             style={{
                               backgroundColor: '#1e293b',
-                              color: '#10b981',
-                              border: '1px solid #10b981',
+                              color: '#a3e635',
+                              border: '1px solid #a3e635',
                               padding: '0.45rem 0.65rem',
                               borderRadius: '8px',
                               fontSize: '0.72rem',

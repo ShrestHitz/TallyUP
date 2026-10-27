@@ -69,7 +69,7 @@ a {
   display: flex;
   flex-direction: column;
   background-color: var(--tly-carbon-base);
-  background-image: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.05) 0%, transparent 60%);
+  background-image: radial-gradient(circle at 50% 0%, rgba(163, 230, 53, 0.05) 0%, transparent 60%);
 }
 
 /* Carbon Card */
@@ -86,7 +86,7 @@ a {
 
 .carbon-card:hover {
   border-color: var(--tly-lime-border);
-  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.8), 0 0 15px rgba(16, 185, 129, 0.1);
+  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.8), 0 0 15px rgba(163, 230, 53, 0.1);
 }
 
 /* Sophisticated Primary Emerald Button */
@@ -97,13 +97,13 @@ a {
   gap: 0.65rem;
   padding: 0.95rem 1.65rem;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #a3e635 0%, #84cc16 100%);
   color: #ffffff;
   font-family: var(--font-display);
   font-size: 0.95rem;
   font-weight: 800;
   letter-spacing: 0.02em;
-  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 18px rgba(163, 230, 53, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.15);
   position: relative;
   cursor: pointer;
@@ -112,7 +112,7 @@ a {
 
 .btn-lime-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.45);
+  box-shadow: 0 8px 25px rgba(163, 230, 53, 0.45);
   filter: brightness(1.08);
 }
 

@@ -20,11 +20,11 @@ export const Navigation: React.FC = () => {
 
   return (
     <header style={{
-      backgroundColor: 'rgba(9, 13, 18, 0.92)',
+      backgroundColor: 'rgba(8, 9, 10, 0.95)',
       backdropFilter: 'blur(20px)',
       WebkitBackdropFilter: 'blur(20px)',
-      borderBottom: '1px solid #1e293b',
-      color: '#f8fafc',
+      borderBottom: '1px solid #24292f',
+      color: '#ffffff',
       padding: '0.75rem 1.25rem',
       position: 'sticky',
       top: 0,
@@ -39,23 +39,23 @@ export const Navigation: React.FC = () => {
         flexWrap: 'wrap',
         gap: '0.75rem',
       }}>
-        {/* Brand & Editorial Business Punchline */}
+        {/* Brand & High-Impact Mixed Typography */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           <div
             onClick={() => setOnboardingStage('SPLASH')}
-            title="Click to replay 3-Screen Onboarding"
+            title="Click to replay Onboarding"
             style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer' }}
           >
             <div style={{
               width: '38px',
               height: '38px',
               borderRadius: '10px',
-              backgroundColor: '#10b981',
+              backgroundColor: '#a3e635',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#090d12',
-              boxShadow: '0 0 18px rgba(16, 185, 129, 0.35)',
+              color: '#08090a',
+              boxShadow: '0 0 20px rgba(163, 230, 53, 0.45)',
               fontWeight: 900,
               fontFamily: 'var(--font-mono)',
               fontSize: '1.15rem',
@@ -69,16 +69,16 @@ export const Navigation: React.FC = () => {
                 fontWeight: 900,
                 letterSpacing: '-0.03em',
                 lineHeight: 1.1,
-                color: '#f8fafc',
+                color: '#ffffff',
               }}>
-                Tally<span style={{ color: '#34d399' }}>UP</span>
+                Tally<span style={{ color: '#a3e635' }}>UP</span>
               </div>
               <div style={{
                 fontSize: '0.65rem',
-                color: '#34d399',
+                color: '#a3e635',
                 fontFamily: 'var(--font-mono)',
                 letterSpacing: '0.08em',
-                fontWeight: 700,
+                fontWeight: 800,
                 textTransform: 'uppercase',
               }}>
                 Count it. Prove it. Get paid.
@@ -89,9 +89,9 @@ export const Navigation: React.FC = () => {
           {/* Tamper status indicator pill */}
           {isLedgerTampered && (
             <span style={{
-              backgroundColor: 'rgba(239, 68, 68, 0.15)',
-              border: '1px solid #ef4444',
-              color: '#ef4444',
+              backgroundColor: 'rgba(255, 71, 87, 0.15)',
+              border: '1px solid #ff4757',
+              color: '#ff4757',
               fontSize: '0.7rem',
               fontWeight: 800,
               fontFamily: 'var(--font-mono)',
@@ -107,22 +107,22 @@ export const Navigation: React.FC = () => {
           )}
         </div>
 
-        {/* Center Punchline Banner (Desktop Editorial Italic) */}
+        {/* Center Punchline Banner (Desktop) */}
         <div style={{
           display: 'none',
           alignItems: 'center',
-          gap: '0.5rem',
-          backgroundColor: '#0f172a',
-          padding: '0.4rem 1rem',
+          gap: '0.55rem',
+          backgroundColor: '#14171a',
+          padding: '0.4rem 1.1rem',
           borderRadius: '9999px',
-          border: '1px solid #1e293b',
+          border: '1px solid #24292f',
           fontSize: '0.8rem',
         }} className="desktop-punch-pill">
-          <span className="punchline-italic" style={{ color: '#34d399', fontSize: '0.95rem' }}>
-            "Every hour counts."
+          <span style={{ color: '#ffffff', fontWeight: 900, fontFamily: 'var(--font-display)' }}>
+            EVERY HOUR COUNTS.
           </span>
-          <span style={{ color: '#64748b' }}>•</span>
-          <span style={{ fontFamily: 'var(--font-mono)', color: '#94a3b8', fontSize: '0.72rem', letterSpacing: '0.05em' }}>
+          <span style={{ color: '#57606a' }}>•</span>
+          <span style={{ fontFamily: 'var(--font-mono)', color: '#a3e635', fontSize: '0.72rem', letterSpacing: '0.06em', fontWeight: 800 }}>
             PROVABLE STATUTORY WAGES
           </span>
         </div>
@@ -132,10 +132,10 @@ export const Navigation: React.FC = () => {
           {/* Sector Switcher (Construction <-> Campus) */}
           <div style={{
             display: 'flex',
-            backgroundColor: '#0f172a',
+            backgroundColor: '#14171a',
             borderRadius: '9999px',
             padding: '3px',
-            border: '1px solid #1e293b',
+            border: '1px solid #24292f',
           }}>
             <button
               onClick={() => setSectorId('construction')}
@@ -148,8 +148,8 @@ export const Navigation: React.FC = () => {
                 fontSize: '0.78rem',
                 fontWeight: 800,
                 fontFamily: 'var(--font-display)',
-                backgroundColor: sectorId === 'construction' ? '#10b981' : 'transparent',
-                color: sectorId === 'construction' ? '#090d12' : '#94a3b8',
+                backgroundColor: sectorId === 'construction' ? '#a3e635' : 'transparent',
+                color: sectorId === 'construction' ? '#08090a' : '#8b949e',
               }}
             >
               <HardHat size={13} />
@@ -166,8 +166,8 @@ export const Navigation: React.FC = () => {
                 fontSize: '0.78rem',
                 fontWeight: 800,
                 fontFamily: 'var(--font-display)',
-                backgroundColor: sectorId === 'campus' ? '#06b6d4' : 'transparent',
-                color: sectorId === 'campus' ? '#090d12' : '#94a3b8',
+                backgroundColor: sectorId === 'campus' ? '#00d2d3' : 'transparent',
+                color: sectorId === 'campus' ? '#08090a' : '#8b949e',
               }}
             >
               <GraduationCap size={13} />
@@ -179,22 +179,22 @@ export const Navigation: React.FC = () => {
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            backgroundColor: '#0f172a',
+            backgroundColor: '#14171a',
             borderRadius: '9999px',
             padding: '2px 0.65rem',
-            border: '1px solid #1e293b',
+            border: '1px solid #24292f',
             gap: '0.35rem',
           }}>
-            <Globe2 size={13} style={{ color: '#34d399' }} />
+            <Globe2 size={13} style={{ color: '#a3e635' }} />
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value as Language)}
               style={{
                 backgroundColor: 'transparent',
-                color: '#f8fafc',
+                color: '#ffffff',
                 border: 'none',
                 fontSize: '0.75rem',
-                fontWeight: 700,
+                fontWeight: 800,
                 fontFamily: 'var(--font-display)',
                 outline: 'none',
                 cursor: 'pointer',
@@ -205,7 +205,7 @@ export const Navigation: React.FC = () => {
                 <option
                   key={opt.code}
                   value={opt.code}
-                  style={{ backgroundColor: '#0f172a', color: '#f8fafc' }}
+                  style={{ backgroundColor: '#14171a', color: '#ffffff' }}
                 >
                   {opt.nativeName} ({opt.label})
                 </option>
@@ -216,10 +216,10 @@ export const Navigation: React.FC = () => {
           {/* View Mode Toggle: Worker PWA vs Admin Hub */}
           <div style={{
             display: 'flex',
-            backgroundColor: '#0f172a',
+            backgroundColor: '#14171a',
             borderRadius: '9999px',
             padding: '3px',
-            border: '1px solid #1e293b',
+            border: '1px solid #24292f',
           }}>
             <button
               onClick={() => setViewMode('WORKER')}
@@ -232,8 +232,8 @@ export const Navigation: React.FC = () => {
                 fontSize: '0.78rem',
                 fontWeight: 800,
                 fontFamily: 'var(--font-display)',
-                backgroundColor: viewMode === 'WORKER' ? '#10b981' : 'transparent',
-                color: viewMode === 'WORKER' ? '#090d12' : '#94a3b8',
+                backgroundColor: viewMode === 'WORKER' ? '#a3e635' : 'transparent',
+                color: viewMode === 'WORKER' ? '#08090a' : '#8b949e',
               }}
             >
               <UserCheck size={14} />
@@ -250,8 +250,8 @@ export const Navigation: React.FC = () => {
                 fontSize: '0.78rem',
                 fontWeight: 800,
                 fontFamily: 'var(--font-display)',
-                backgroundColor: viewMode === 'ADMIN' ? '#10b981' : 'transparent',
-                color: viewMode === 'ADMIN' ? '#090d12' : '#94a3b8',
+                backgroundColor: viewMode === 'ADMIN' ? '#a3e635' : 'transparent',
+                color: viewMode === 'ADMIN' ? '#08090a' : '#8b949e',
               }}
             >
               <LayoutDashboard size={14} />
@@ -261,14 +261,14 @@ export const Navigation: React.FC = () => {
 
           <button
             onClick={() => setOnboardingStage('SPLASH')}
-            title="Launch 3-Screen Onboarding Flow"
+            title="Launch Onboarding Tour"
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '0.35rem',
-              backgroundColor: 'rgba(16, 185, 129, 0.1)',
-              border: '1px solid rgba(16, 185, 129, 0.4)',
-              color: '#34d399',
+              backgroundColor: 'rgba(163, 230, 53, 0.15)',
+              border: '1px solid #a3e635',
+              color: '#a3e635',
               padding: '0.35rem 0.75rem',
               borderRadius: '9999px',
               fontSize: '0.75rem',
